@@ -7,10 +7,12 @@ import io.ktor.client.request.parameter
 import javax.inject.Inject
 
 class ItunesApi @Inject constructor(private val client: HttpClient) {
-    suspend fun searchTrackPreview(query: String): ItunesResponseDto =
+
+    suspend fun searchTrackPreview(query: String, limit: Int = 5): ItunesResponseDto =
         client.get("https://itunes.apple.com/search") {
             parameter("term", query)
             parameter("media", "music")
-            parameter("limit", "1")
+            parameter("entity", "song")
+            parameter("limit", limit.toString())
         }.body()
 }
