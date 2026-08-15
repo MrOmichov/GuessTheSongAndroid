@@ -61,6 +61,35 @@ class YandexPlaylistUrlParserTest {
     }
 
     @Test
+    fun parse_uuidPlaylist_withPsPrefixAndDot_success() {
+        val url = "https://music.yandex.ru/playlists/ps.f4c4458b-2d70-49f9-b7b6-87bbbbcd4567"
+        val expected = YandexPlaylistTarget.UuidPlaylist(uuid = "ps.f4c4458b-2d70-49f9-b7b6-87bbbbcd4567")
+
+        val result = parser.parse(url)
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun parse_singularPlaylistPath_success() {
+        val urlUser = "https://music.yandex.ru/users/yamusic-top/playlist/1000"
+        val urlUuid = "https://music.yandex.ru/playlist/ps.f4c4458b-2d70-49f9-b7b6-87bbbbcd4567"
+
+        assertEquals(YandexPlaylistTarget.UserPlaylist("yamusic-top", "1000"), parser.parse(urlUser))
+        assertEquals(YandexPlaylistTarget.UuidPlaylist("ps.f4c4458b-2d70-49f9-b7b6-87bbbbcd4567"), parser.parse(urlUuid))
+    }
+
+    @Test
+    fun parse_withoutHttpsScheme_success() {
+        val url = "music.yandex.ru/playlists/ps.f4c4458b-2d70-49f9-b7b6-87bbbbcd4567"
+        val expected = YandexPlaylistTarget.UuidPlaylist(uuid = "ps.f4c4458b-2d70-49f9-b7b6-87bbbbcd4567")
+
+        val result = parser.parse(url)
+
+        assertEquals(expected, result)
+    }
+
+    @Test
     fun parse_invalidUrl_returnsNull() {
         assertNull(parser.parse("https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"))
         assertNull(parser.parse("not_a_url"))

@@ -9,8 +9,8 @@ sealed interface YandexPlaylistTarget {
 
 class YandexPlaylistUrlParser @Inject constructor() {
 
-    private val userPlaylistRegex = """.*music\.yandex\.[a-z]+/users/([^/]+)/playlists/(\d+).*""".toRegex()
-    private val uuidPlaylistRegex = """.*music\.yandex\.[a-z]+/playlists/([a-zA-Z0-9-]+).*""".toRegex()
+    private val userPlaylistRegex = """.*(?:^|//)music\.yandex\.[a-z]+/users/([^/]+)/playlists?/(\d+).*""".toRegex(RegexOption.IGNORE_CASE)
+    private val uuidPlaylistRegex = """.*(?:^|//)music\.yandex\.[a-z]+/playlists?/([^/?#]+).*""".toRegex(RegexOption.IGNORE_CASE)
 
     fun parse(url: String): YandexPlaylistTarget? {
         val cleanUrl = url.trim().substringBefore("?")
