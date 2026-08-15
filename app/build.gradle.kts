@@ -48,7 +48,12 @@ dependencies {
     implementation("com.google.dagger:dagger:2.60.1")
     ksp("com.google.dagger:dagger-compiler:2.60.1")
 
-    implementation("ch.qos.logback:logback-classic:1.6.2")
+    implementation("ch.qos.logback:logback-classic:1.6.3")
+
+    implementation("androidx.media3:media3-exoplayer:1.11.0")
+    implementation("androidx.media3:media3-exoplayer-dash:1.11.0")
+    implementation("androidx.media3:media3-ui:1.11.0")
+    implementation("androidx.media3:media3-ui-compose-material3:1.11.0")
 
     // Ktor
     implementation("io.ktor:ktor-client-core:3.5.2")
