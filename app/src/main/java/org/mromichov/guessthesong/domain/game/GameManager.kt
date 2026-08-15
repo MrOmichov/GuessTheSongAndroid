@@ -1,4 +1,10 @@
 package org.mromichov.guessthesong.domain.game
 
-class GameManager {
+import org.mromichov.guessthesong.domain.model.Playlist
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class GameManager @Inject constructor() {
+    var currentPlaylist: Playlist? = null
 }
