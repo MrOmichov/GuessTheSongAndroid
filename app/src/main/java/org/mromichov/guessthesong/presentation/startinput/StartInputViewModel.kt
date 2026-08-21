@@ -22,8 +22,12 @@ class StartInputViewModel @Inject constructor(
             _uiState.value = StartInputUiState.Loading
             playlistRepository.getPlaylistByUrl(url)
                 .onSuccess { playlist ->
-                    _uiState.value = StartInputUiState.Success(playlist)
-                    gameManager.currentPlaylist = playlist
+                    try {
+                        gameManager.prepareRounds(playlist)
+                        _uiState.value = StartInputUiState.Success(playlist)
+                    } catch (e: Exception) {
+                        _uiState.value = StartInputUiState.Error(e.message ?: "Ошибка загрузки плейлиста")
+                    }
                 }
                 .onFailure { error ->
                     _uiState.value = StartInputUiState.Error(error.message ?: "Ошибка загрузки плейлиста")
