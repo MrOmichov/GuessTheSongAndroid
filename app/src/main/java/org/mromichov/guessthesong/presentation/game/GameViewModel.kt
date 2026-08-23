@@ -10,6 +10,7 @@ import org.mromichov.guessthesong.domain.game.GameManager
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.player.AudioPlayer
 import javax.inject.Inject
+import kotlin.random.Random
 
 class GameViewModel @Inject constructor(
     private val gameManager: GameManager,
@@ -41,10 +42,12 @@ class GameViewModel @Inject constructor(
     fun startRoundOrGameOver() {
         if (gameManager.currentRoundNumber == 5) {
             _uiState.value = GameUiState.GameOver(score)
+            gameManager.reset()
         }
         gameManager.nextRound()
         val trackPreview = gameManager.getCurrentTrackPreview()
-        audioPlayer.play(trackPreview.previewUrl, 0L, 5000L)
+        val start = Random.nextLong(0L, 25000L)
+        audioPlayer.play(trackPreview.previewUrl, start, start + 5000L)
     }
 
     fun checkAnswer(track: Track) {

@@ -76,6 +76,12 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
                         text = "Game Over",
                         style = MaterialTheme.typography.bodyLarge
                     )
+
+                    OutlinedButton(
+                        onClick = onEnd
+                    ) {
+                       Text("В главное меню")
+                    }
                 }
 
             }

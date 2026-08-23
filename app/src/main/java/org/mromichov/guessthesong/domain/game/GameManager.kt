@@ -55,15 +55,16 @@ class GameManager @Inject constructor(
         }
         val trackPreview: TrackPreview = trackPreviewRepository
             .getPreview(track.artist, track.title)
-            .onFailure { error ->
-                Log.e("TrackPreview", "Ошибка получения трека: ${error.message}", error)
-            }
-
             .getOrElse {
                 throw TrackPreviewException()
             }
 
 
         return GameRound(track, trackPreview, wrongOptions)
+    }
+
+    fun reset() {
+        currentRoundNumber = 0
+        rounds.removeAll { true }
     }
 }
