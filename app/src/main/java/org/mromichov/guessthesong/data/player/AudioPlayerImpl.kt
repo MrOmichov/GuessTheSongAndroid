@@ -38,6 +38,9 @@ class AudioPlayerImpl @Inject constructor(
     private val _currentMs = MutableStateFlow(0L)
     override val currentMs: StateFlow<Long> = _currentMs.asStateFlow()
 
+    private val _durationMs = MutableStateFlow(0L)
+    override val durationMs: StateFlow<Long> = _durationMs.asStateFlow()
+
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var progressJob: Job? = null
     private fun startProgressPolling() {
@@ -78,7 +81,9 @@ class AudioPlayerImpl @Inject constructor(
 
         ExoPlayer.Builder(context)
             .setMediaSourceFactory(mediaSourceFactory)
-            .build().apply {
+            .build()
+            .apply {
+                volume = 1.0f
                 addListener(object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _isPlaying.value = isPlaying
@@ -88,11 +93,18 @@ class AudioPlayerImpl @Inject constructor(
                             stopProgressPolling()
                             _currentMs.value = player.currentPosition
                         }
+
+
                     }
 
                     override fun onPlaybackStateChanged(state: Int) {
+                        if (state == Player.STATE_READY) {
+                            if (player.duration > 0) {
+                                _durationMs.value = player.duration
+                            }
+                        }
                         if (state == Player.STATE_ENDED) {
-                            _currentMs.value = player.duration
+                            _currentMs.value = _durationMs.value
                         }
                     }
                 })
@@ -100,8 +112,16 @@ class AudioPlayerImpl @Inject constructor(
     }
 
 
-    override fun play(url: String, startMs: Long) {
-        val mediaItem = MediaItem.fromUri(url)
+    override fun play(url: String, startMs: Long, endMs: Long) {
+        val mediaItem = MediaItem.Builder()
+            .setUri(url)
+            .setClippingConfiguration(
+                MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(startMs)
+                    .setEndPositionMs(endMs)
+                    .build()
+            )
+            .build()
         player.setMediaItem(mediaItem, startMs)
         player.prepare()
         player.play()
@@ -111,6 +131,7 @@ class AudioPlayerImpl @Inject constructor(
         player.stop()
         stopProgressPolling()
         _currentMs.value = 0L
+        _durationMs.value = 0L
     }
 
     override fun release() {

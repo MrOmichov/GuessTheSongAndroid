@@ -1,5 +1,6 @@
 package org.mromichov.guessthesong.data.repository
 
+import android.util.Log
 import org.mromichov.guessthesong.data.remote.itunes.ItunesApi
 import org.mromichov.guessthesong.data.remote.itunes.ItunesMapper
 import org.mromichov.guessthesong.domain.model.TrackPreview
@@ -14,6 +15,7 @@ class TrackPreviewRepositoryImpl @Inject constructor(
     override suspend fun getPreview(artist: String, title: String): Result<TrackPreview> = runCatching {
         val query = "$artist $title".trim()
         val response = itunesApi.searchTrackPreview(query = query)
+        Log.d("preview",  if (response.results[0].previewUrl != null) response.results[0].previewUrl!! else "Pizda")
         mapper.findBestMatch(response)
             ?: throw NoSuchElementException("No audio preview found in iTunes for query: $query")
     }

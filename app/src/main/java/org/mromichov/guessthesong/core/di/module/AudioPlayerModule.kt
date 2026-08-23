@@ -1,4 +1,4 @@
-package org.mromichov.guessthesong.core.di
+package org.mromichov.guessthesong.core.di.module
 
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi

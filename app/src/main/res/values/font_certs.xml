@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="com_google_android_gms_fonts_certs">
+        <item>@array/com_google_android_gms_fonts_certs_dev</item>
+        <item>@array/com_google_android_gms_fonts_certs_prod</item>
+    </array>
+    <string-array name="com_google_android_gms_fonts_certs_dev">
+        <item>
+            MIIEqDCCA5CgAwIBAgIJANWFuGx90071MA0GCSqGSIb3DQEBBAUAMIGUMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEQMA4GA1UEChMHR29vZ2xlMRAwDgYDVQQLEwdBbmRyb2lkMRAwDgYDVQQDEwdBbmRyb2lkMCEGCSqGSIb3DQEJARYUYW5kcm9pZEBhbmRyb2lkLmNvbTAeFw0wODEyMDkyMzIzMDdaFw0zNjA0MjkyMzIzMDdaMIGUMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEQMA4GA1UEChMHR29vZ2xlMRAwDgYDVQQLEwdBbmRyb2lkMRAwDgYDVQQDEwdBbmRyb2lkMCEGCSqGSIb3DQEJARYUYW5kcm9pZEBhbmRyb2lkLmNvbTCCAS8wDQYJKoZIhvcNAQEBBQADggEmADCCASQCggEBAKaaSN6Lq/8Q5+4K0+Z+6XwU43pYqO1B/7jD/xW2fJbBsqR8QJ4x+YvU7m0H6F4d8hFh68eZ/U/Y0e5T47D/X/q10sD3q511Hqj12Wp+c2Q3Qf659/B7m3j0rJ8Q5Xk8z5t3PqD4Kq1w/3w1u1p5bY0kUqP8e5f7tY1gqD8c4u5P2m+u8t9+QJ/9p4wP5r6d8YQe6v2y5L/X0h7m8h0s3s6N5e8P6j1g8r4P8j1t5t6r6u8r9/P8Y5c4v2t5f7w5u0=
+        </item>
+    </string-array>
+    <string-array name="com_google_android_gms_fonts_certs_prod">
+        <item>
+            MIIEqDCCA5CgAwIBAgIJANWFuGx90071MA0GCSqGSIb3DQEBBAUAMIGUMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEQMA4GA1UEChMHR29vZ2xlMRAwDgYDVQQLEwdBbmRyb2lkMRAwDgYDVQQDEwdBbmRyb2lkMCEGCSqGSIb3DQEJARYUYW5kcm9pZEBhbmRyb2lkLmNvbTAeFw0wODEyMDkyMzIzMDdaFw0zNjA0MjkyMzIzMDdaMIGUMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEQMA4GA1UEChMHR29vZ2xlMRAwDgYDVQQLEwdBbmRyb2lkMRAwDgYDVQQDEwdBbmRyb2lkMCEGCSqGSIb3DQEJARYUYW5kcm9pZEBhbmRyb2lkLmNvbTCCAS8wDQYJKoZIhvcNAQEBBQADggEmADCCASQCggEBAKaaSN6Lq/8Q5+4K0+Z+6XwU43pYqO1B/7jD/xW2fJbBsqR8QJ4x+YvU7m0H6F4d8hFh68eZ/U/Y0e5T47D/X/q10sD3q511Hqj12Wp+c2Q3Qf659/B7m3j0rJ8Q5Xk8z5t3PqD4Kq1w/3w1u1p5bY0kUqP8e5f7tY1gqD8c4u5P2m+u8t9+QJ/9p4wP5r6d8YQe6v2y5L/X0h7m8h0s3s6N5e8P6j1g8r4P8j1t5t6r6u8r9/P8Y5c4v2t5f7w5u0=
+        </item>
+    </string-array>
+</resources>

@@ -1,4 +1,4 @@
-package org.mromichov.guessthesong.core.di
+package org.mromichov.guessthesong.core.di.module
 
 import dagger.Module
 import dagger.Provides

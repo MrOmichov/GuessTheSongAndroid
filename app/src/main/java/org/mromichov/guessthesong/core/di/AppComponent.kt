@@ -1,10 +1,19 @@
 package org.mromichov.guessthesong.core.di
 
+import android.content.Context
+import dagger.BindsInstance
 import dagger.Component
-import dagger.Module
 import org.mromichov.guessthesong.MainActivity
+import org.mromichov.guessthesong.core.di.module.*
+import javax.inject.Singleton
 
-@Component(modules = [NetworkModule::class, RepositoryModule::class, AudioPlayerModule::class])
+@Singleton
+@Component(modules = [NetworkModule::class, RepositoryModule::class, AudioPlayerModule::class, ViewModelModule::class])
 interface AppComponent {
     fun inject(mainActivity: MainActivity)
+
+    @Component.Factory
+    interface Factory {
+        fun create(@BindsInstance context: Context): AppComponent
+    }
 }
