@@ -1,12 +1,21 @@
 package org.mromichov.guessthesong.data.remote.spotify
 
-import com.adamratzman.spotify.models.Playlist
-import com.adamratzman.spotify.models.Track
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.mromichov.guessthesong.core.exception.TrackCountException
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyAudioPreviewDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyCoverArtDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyDataDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyEntityDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyImageSourceDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyPagePropsDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyPropsDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyStateDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebEmbedDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebTrackDto
 
 class SpotifyMapperTest {
 
@@ -17,287 +26,128 @@ class SpotifyMapperTest {
     }
 
     @Test
-    fun toDomain_singleTrack_formatsArtistsAndCoverUrlCorrectly() {
-        val trackJson = """
-        {
-            "id": "track_123",
-            "name": "Starboy",
-            "popularity": 95,
-            "available_markets": [],
-            "external_ids": {},
-            "artists": [
-                {
-                    "id": "artist1",
-                    "name": "The Weeknd",
-                    "href": "href1",
-                    "uri": "spotify:artist:artist1",
-                    "type": "artist",
-                    "external_urls": {}
-                },
-                {
-                    "id": "artist2",
-                    "name": "Daft Punk",
-                    "href": "href2",
-                    "uri": "spotify:artist:artist2",
-                    "type": "artist",
-                    "external_urls": {}
-                }
-            ],
-            "album": {
-                "id": "album_123",
-                "name": "Starboy",
-                "href": "href",
-                "uri": "spotify:album:album_123",
-                "album_type": "album",
-                "type": "album",
-                "artists": [],
-                "images": [
-                    {
-                        "url": "https://i.scdn.co/image/ab67616d0000b273starboy",
-                        "height": 640,
-                        "width": 640
-                    }
-                ],
-                "external_urls": {}
-            },
-            "duration_ms": 230000,
-            "preview_url": "https://p.scdn.co/mp3-preview/sample.mp3",
-            "disc_number": 1,
-            "track_number": 1,
-            "explicit": false,
-            "is_playable": true,
-            "href": "href",
-            "type": "track",
-            "uri": "spotify:track:track_123",
-            "is_local": false,
-            "external_urls": {}
-        }
-        """.trimIndent()
+    fun toDomain_singleTrack_formatsIdArtistAndDurationCorrectly() {
+        val trackDto = SpotifyWebTrackDto(
+            uri = "spotify:track:2vzfV6LgfAWtv7JeSoEPFO",
+            uid = "02f3ca667955def4",
+            title = "The Silent Man",
+            subtitle = "Dream Theater",
+            duration = 227733,
+            audioPreview = SpotifyAudioPreviewDto(
+                format = "MP3_96",
+                url = "https://p.scdn.co/mp3-preview/sample.mp3"
+            )
+        )
 
-        val spotifyTrack = json.decodeFromString<Track>(trackJson)
-        val domainTrack = mapper.toDomain(spotifyTrack)
+        val domainTrack = mapper.toDomain(dto = trackDto, coverUrl = "https://cover.url")
 
-        assertEquals("track_123", domainTrack.id)
-        assertEquals("Starboy", domainTrack.title)
-        assertEquals("The Weeknd, Daft Punk", domainTrack.artist)
-        assertEquals("https://i.scdn.co/image/ab67616d0000b273starboy", domainTrack.coverUrl)
-        assertEquals(230000L, domainTrack.durationMs)
+        assertEquals("2vzfV6LgfAWtv7JeSoEPFO", domainTrack.id)
+        assertEquals("The Silent Man", domainTrack.title)
+        assertEquals("Dream Theater", domainTrack.artist)
+        assertEquals("https://cover.url", domainTrack.coverUrl)
+        assertEquals(227733L, domainTrack.durationMs)
     }
 
     @Test
-    fun toDomain_playlistTracks_mapsAllValidTracksWhenAtLeast20Tracks() {
-        val singleTrackJson = """
-        {
-            "is_local": false,
-            "track": {
-                "id": "track_id",
-                "name": "Track Name",
-                "popularity": 80,
-                "available_markets": [],
-                "external_ids": {},
-                "artists": [
-                    {
-                        "id": "artist1",
-                        "name": "Queen",
-                        "href": "href",
-                        "uri": "spotify:artist:artist1",
-                        "type": "artist",
-                        "external_urls": {}
-                    }
-                ],
-                "album": {
-                    "id": "album_queen",
-                    "name": "Album",
-                    "href": "href",
-                    "uri": "spotify:album:album_queen",
-                    "album_type": "album",
-                    "type": "album",
-                    "artists": [],
-                    "images": [
-                        {
-                            "url": "https://i.scdn.co/image/cover",
-                            "height": 640,
-                            "width": 640
-                        }
-                    ],
-                    "external_urls": {}
-                },
-                "duration_ms": 200000,
-                "preview_url": "https://p.scdn.co/mp3-preview/preview.mp3",
-                "disc_number": 1,
-                "track_number": 1,
-                "explicit": false,
-                "is_playable": true,
-                "href": "href",
-                "type": "track",
-                "uri": "spotify:track:track_id",
-                "is_local": false,
-                "external_urls": {}
-            }
+    fun toDomain_embedDto_mapsAll20TracksAndPlaylistTitle() {
+        val tracks = List(20) { index ->
+            SpotifyWebTrackDto(
+                uri = "spotify:track:track_$index",
+                title = "Track $index",
+                subtitle = "Artist $index",
+                duration = 200000L
+            )
         }
-        """.trimIndent()
 
-        val item = json.decodeFromString<com.adamratzman.spotify.models.PlaylistTrack>(singleTrackJson)
-        val items = List(20) { item }
+        val embedDto = SpotifyWebEmbedDto(
+            props = SpotifyPropsDto(
+                pageProps = SpotifyPagePropsDto(
+                    state = SpotifyStateDto(
+                        data = SpotifyDataDto(
+                            entity = SpotifyEntityDto(
+                                id = "4lcPGoGgUtNpexPogG2ctm",
+                                name = "Dream Theater ballads",
+                                coverArt = SpotifyCoverArtDto(
+                                    sources = listOf(
+                                        SpotifyImageSourceDto(url = "https://mosaic.scdn.co/640/cover.jpg")
+                                    )
+                                ),
+                                trackList = tracks
+                            )
+                        )
+                    )
+                )
+            )
+        )
 
-        val domainPlaylist = mapper.toDomain(playlistId = "rock_classics_id", tracks = items, title = "Rock Classics")
+        val domainPlaylist = mapper.toDomain(playlistId = "4lcPGoGgUtNpexPogG2ctm", dto = embedDto)
 
-        assertEquals("rock_classics_id", domainPlaylist.id)
-        assertEquals("Rock Classics", domainPlaylist.title)
+        assertEquals("4lcPGoGgUtNpexPogG2ctm", domainPlaylist.id)
+        assertEquals("Dream Theater ballads", domainPlaylist.title)
         assertEquals(20, domainPlaylist.tracks.size)
-        assertEquals("Track Name", domainPlaylist.tracks.first().title)
-        assertEquals("Queen", domainPlaylist.tracks.first().artist)
+        assertEquals("Track 0", domainPlaylist.tracks.first().title)
+        assertEquals("Artist 0", domainPlaylist.tracks.first().artist)
+        assertEquals("https://mosaic.scdn.co/640/cover.jpg", domainPlaylist.tracks.first().coverUrl)
     }
 
-    @Test(expected = org.mromichov.guessthesong.core.exception.TrackCountException::class)
-    fun toDomain_playlistTracksLessThan20_throwsTrackCountException() {
-        val singleTrackJson = """
-        {
-            "is_local": false,
-            "track": {
-                "id": "track_id",
-                "name": "Track Name",
-                "popularity": 80,
-                "available_markets": [],
-                "external_ids": {},
-                "artists": [],
-                "album": {
-                    "id": "album_id",
-                    "name": "Album",
-                    "href": "href",
-                    "uri": "spotify:album:album_id",
-                    "album_type": "album",
-                    "type": "album",
-                    "artists": [],
-                    "images": [],
-                    "external_urls": {}
-                },
-                "duration_ms": 200000,
-                "disc_number": 1,
-                "track_number": 1,
-                "explicit": false,
-                "is_playable": true,
-                "href": "href",
-                "type": "track",
-                "uri": "spotify:track:track_id",
-                "is_local": false,
-                "external_urls": {}
-            }
+    @Test(expected = TrackCountException::class)
+    fun toDomain_lessThan20Tracks_throwsTrackCountException() {
+        val tracks = List(5) { index ->
+            SpotifyWebTrackDto(
+                uri = "spotify:track:track_$index",
+                title = "Track $index",
+                subtitle = "Artist $index",
+                duration = 200000L
+            )
         }
-        """.trimIndent()
 
-        val item = json.decodeFromString<com.adamratzman.spotify.models.PlaylistTrack>(singleTrackJson)
-        val items = List(5) { item }
+        val embedDto = SpotifyWebEmbedDto(
+            props = SpotifyPropsDto(
+                pageProps = SpotifyPagePropsDto(
+                    state = SpotifyStateDto(
+                        data = SpotifyDataDto(
+                            entity = SpotifyEntityDto(
+                                id = "short_playlist",
+                                name = "Short Playlist",
+                                trackList = tracks
+                            )
+                        )
+                    )
+                )
+            )
+        )
 
-        mapper.toDomain(playlistId = "short_playlist", tracks = items)
+        mapper.toDomain(playlistId = "short_playlist", dto = embedDto)
     }
 
     @Test
     fun toPreviewDomain_trackWithPreview_returnsTrackPreview() {
-        val trackJson = """
-        {
-            "id": "lose_yourself",
-            "name": "Lose Yourself",
-            "popularity": 88,
-            "available_markets": [],
-            "external_ids": {},
-            "artists": [
-                {
-                    "id": "artist1",
-                    "name": "Eminem",
-                    "href": "href",
-                    "uri": "spotify:artist:artist1",
-                    "type": "artist",
-                    "external_urls": {}
-                }
-            ],
-            "album": {
-                "id": "album_8mile",
-                "name": "8 Mile",
-                "href": "href",
-                "uri": "spotify:album:album_8mile",
-                "album_type": "album",
-                "type": "album",
-                "artists": [],
-                "images": [
-                    {
-                        "url": "https://i.scdn.co/image/8mile_cover",
-                        "height": 640,
-                        "width": 640
-                    }
-                ],
-                "external_urls": {}
-            },
-            "duration_ms": 326000,
-            "preview_url": "https://p.scdn.co/mp3-preview/lose_yourself.mp3",
-            "disc_number": 1,
-            "track_number": 1,
-            "explicit": true,
-            "is_playable": true,
-            "href": "href",
-            "type": "track",
-            "uri": "spotify:track:lose_yourself",
-            "is_local": false,
-            "external_urls": {}
-        }
-        """.trimIndent()
+        val trackDto = SpotifyWebTrackDto(
+            uri = "spotify:track:123",
+            title = "Lose Yourself",
+            subtitle = "Eminem",
+            audioPreview = SpotifyAudioPreviewDto(url = "https://preview.mp3")
+        )
 
-        val spotifyTrack = json.decodeFromString<Track>(trackJson)
-        val preview = mapper.toPreviewDomain(spotifyTrack)
+        val preview = mapper.toPreviewDomain(trackDto, artworkUrl = "https://cover.jpg")
 
         assertNotNull(preview)
         assertEquals("Lose Yourself", preview?.trackName)
         assertEquals("Eminem", preview?.artistName)
-        assertEquals("https://p.scdn.co/mp3-preview/lose_yourself.mp3", preview?.previewUrl)
-        assertEquals("https://i.scdn.co/image/8mile_cover", preview?.artworkUrl)
+        assertEquals("https://preview.mp3", preview?.previewUrl)
+        assertEquals("https://cover.jpg", preview?.artworkUrl)
     }
 
     @Test
     fun toPreviewDomain_trackWithoutPreview_returnsNull() {
-        val trackJson = """
-        {
-            "id": "lose_yourself",
-            "name": "Lose Yourself",
-            "popularity": 88,
-            "available_markets": [],
-            "external_ids": {},
-            "artists": [
-                {
-                    "id": "artist1",
-                    "name": "Eminem",
-                    "href": "href",
-                    "uri": "spotify:artist:artist1",
-                    "type": "artist",
-                    "external_urls": {}
-                }
-            ],
-            "album": {
-                "id": "album_8mile",
-                "name": "8 Mile",
-                "href": "href",
-                "uri": "spotify:album:album_8mile",
-                "album_type": "album",
-                "type": "album",
-                "artists": [],
-                "images": [],
-                "external_urls": {}
-            },
-            "duration_ms": 326000,
-            "preview_url": null,
-            "disc_number": 1,
-            "track_number": 1,
-            "explicit": true,
-            "is_playable": true,
-            "href": "href",
-            "type": "track",
-            "uri": "spotify:track:lose_yourself",
-            "is_local": false,
-            "external_urls": {}
-        }
-        """.trimIndent()
+        val trackDto = SpotifyWebTrackDto(
+            uri = "spotify:track:123",
+            title = "Lose Yourself",
+            subtitle = "Eminem",
+            audioPreview = null
+        )
 
-        val spotifyTrack = json.decodeFromString<Track>(trackJson)
-        val preview = mapper.toPreviewDomain(spotifyTrack)
+        val preview = mapper.toPreviewDomain(trackDto, artworkUrl = "https://cover.jpg")
 
         assertNull(preview)
     }
