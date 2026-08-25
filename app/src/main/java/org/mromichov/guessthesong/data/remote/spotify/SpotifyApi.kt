@@ -2,6 +2,7 @@ package org.mromichov.guessthesong.data.remote.spotify
 
 import com.adamratzman.spotify.SpotifyAppApi
 import com.adamratzman.spotify.models.Playlist
+import com.adamratzman.spotify.models.PlaylistTrack
 import com.adamratzman.spotify.models.Track
 import com.adamratzman.spotify.spotifyAppApi
 import kotlinx.coroutines.sync.Mutex
@@ -29,6 +30,12 @@ class SpotifyApi @Inject constructor(
     suspend fun getPlaylist(playlistId: String): Playlist? {
         val api = getApi()
         return api.playlists.getPlaylist(playlistId)
+    }
+
+    suspend fun getPlaylistTracks(playlistId: String, limit: Int = 50): List<PlaylistTrack> {
+        val api = getApi()
+        val paging = api.playlists.getPlaylistTracks(playlist = playlistId, limit = limit)
+        return paging.items
     }
 
     suspend fun searchTrack(query: String, limit: Int = 5): List<Track> {

@@ -85,99 +85,111 @@ class SpotifyMapperTest {
     }
 
     @Test
-    fun toDomain_playlist_mapsAllValidTracks() {
-        val playlistJson = """
+    fun toDomain_playlistTracks_mapsAllValidTracksWhenAtLeast20Tracks() {
+        val singleTrackJson = """
         {
-            "id": "rock_classics_id",
-            "name": "Rock Classics",
-            "description": "Rock Classics",
-            "href": "href",
-            "uri": "spotify:playlist:rock_classics_id",
-            "public": true,
-            "collaborative": false,
-            "snapshot_id": "snapshot_1",
-            "type": "playlist",
-            "followers": {
-                "href": null,
-                "total": 100
-            },
-            "images": [],
-            "owner": {
-                "id": "spotify",
-                "display_name": "Spotify",
-                "href": "href",
-                "type": "user",
-                "uri": "spotify:user:spotify",
-                "external_urls": {}
-            },
-            "tracks": {
-                "href": "href",
-                "items": [
+            "is_local": false,
+            "track": {
+                "id": "track_id",
+                "name": "Track Name",
+                "popularity": 80,
+                "available_markets": [],
+                "external_ids": {},
+                "artists": [
                     {
-                        "is_local": false,
-                        "track": {
-                            "id": "bohemian_rhapsody",
-                            "name": "Bohemian Rhapsody",
-                            "popularity": 90,
-                            "available_markets": [],
-                            "external_ids": {},
-                            "artists": [
-                                {
-                                    "id": "artist1",
-                                    "name": "Queen",
-                                    "href": "href",
-                                    "uri": "spotify:artist:artist1",
-                                    "type": "artist",
-                                    "external_urls": {}
-                                }
-                            ],
-                            "album": {
-                                "id": "album_queen",
-                                "name": "A Night at the Opera",
-                                "href": "href",
-                                "uri": "spotify:album:album_queen",
-                                "album_type": "album",
-                                "type": "album",
-                                "artists": [],
-                                "images": [
-                                    {
-                                        "url": "https://i.scdn.co/image/queen_cover",
-                                        "height": 640,
-                                        "width": 640
-                                    }
-                                ],
-                                "external_urls": {}
-                            },
-                            "duration_ms": 354000,
-                            "preview_url": "https://p.scdn.co/mp3-preview/bohemian.mp3",
-                            "disc_number": 1,
-                            "track_number": 1,
-                            "explicit": false,
-                            "is_playable": true,
-                            "href": "href",
-                            "type": "track",
-                            "uri": "spotify:track:bohemian_rhapsody",
-                            "is_local": false,
-                            "external_urls": {}
-                        }
+                        "id": "artist1",
+                        "name": "Queen",
+                        "href": "href",
+                        "uri": "spotify:artist:artist1",
+                        "type": "artist",
+                        "external_urls": {}
                     }
                 ],
-                "limit": 100,
-                "offset": 0,
-                "total": 1
-            },
-            "external_urls": {}
+                "album": {
+                    "id": "album_queen",
+                    "name": "Album",
+                    "href": "href",
+                    "uri": "spotify:album:album_queen",
+                    "album_type": "album",
+                    "type": "album",
+                    "artists": [],
+                    "images": [
+                        {
+                            "url": "https://i.scdn.co/image/cover",
+                            "height": 640,
+                            "width": 640
+                        }
+                    ],
+                    "external_urls": {}
+                },
+                "duration_ms": 200000,
+                "preview_url": "https://p.scdn.co/mp3-preview/preview.mp3",
+                "disc_number": 1,
+                "track_number": 1,
+                "explicit": false,
+                "is_playable": true,
+                "href": "href",
+                "type": "track",
+                "uri": "spotify:track:track_id",
+                "is_local": false,
+                "external_urls": {}
+            }
         }
         """.trimIndent()
 
-        val playlist = json.decodeFromString<Playlist>(playlistJson)
-        val domainPlaylist = mapper.toDomain(playlist)
+        val item = json.decodeFromString<com.adamratzman.spotify.models.PlaylistTrack>(singleTrackJson)
+        val items = List(20) { item }
+
+        val domainPlaylist = mapper.toDomain(playlistId = "rock_classics_id", tracks = items, title = "Rock Classics")
 
         assertEquals("rock_classics_id", domainPlaylist.id)
         assertEquals("Rock Classics", domainPlaylist.title)
-        assertEquals(1, domainPlaylist.tracks.size)
-        assertEquals("Bohemian Rhapsody", domainPlaylist.tracks.first().title)
+        assertEquals(20, domainPlaylist.tracks.size)
+        assertEquals("Track Name", domainPlaylist.tracks.first().title)
         assertEquals("Queen", domainPlaylist.tracks.first().artist)
+    }
+
+    @Test(expected = org.mromichov.guessthesong.core.exception.TrackCountException::class)
+    fun toDomain_playlistTracksLessThan20_throwsTrackCountException() {
+        val singleTrackJson = """
+        {
+            "is_local": false,
+            "track": {
+                "id": "track_id",
+                "name": "Track Name",
+                "popularity": 80,
+                "available_markets": [],
+                "external_ids": {},
+                "artists": [],
+                "album": {
+                    "id": "album_id",
+                    "name": "Album",
+                    "href": "href",
+                    "uri": "spotify:album:album_id",
+                    "album_type": "album",
+                    "type": "album",
+                    "artists": [],
+                    "images": [],
+                    "external_urls": {}
+                },
+                "duration_ms": 200000,
+                "disc_number": 1,
+                "track_number": 1,
+                "explicit": false,
+                "is_playable": true,
+                "href": "href",
+                "type": "track",
+                "uri": "spotify:track:track_id",
+                "is_local": false,
+                "external_urls": {}
+            }
+        }
+        """.trimIndent()
+
+        val item = json.decodeFromString<com.adamratzman.spotify.models.PlaylistTrack>(singleTrackJson)
+        val items = List(5) { item }
+
+        mapper.toDomain(playlistId = "short_playlist", tracks = items)
     }
 
     @Test

@@ -29,10 +29,11 @@ class SpotifyLiveIntegrationTest {
         val target = parser.parse(url) as? SpotifyPlaylistTarget.Playlist
         assertNotNull("URL parsing should succeed", target)
 
-        val spotifyPlaylist = api.getPlaylist(target!!.id)
-        assertNotNull("Playlist should be fetched successfully", spotifyPlaylist)
+        val spotifyTracks = api.getPlaylistTracks(target!!.id)
+        assertNotNull("Playlist tracks should be fetched successfully", spotifyTracks)
+        assertFalse("Playlist tracks should not be empty", spotifyTracks.isEmpty())
 
-        val domainPlaylist = mapper.toDomain(spotifyPlaylist!!)
+        val domainPlaylist = mapper.toDomain(playlistId = target.id, tracks = spotifyTracks)
 
         println("=== LIVE SPOTIFY PLAYLIST ===")
         println("Title: ${domainPlaylist.title}")
