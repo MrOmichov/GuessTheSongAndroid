@@ -26,8 +26,7 @@ class PlaylistRepositoryImpl @Inject constructor(
             when (target) {
                 is SpotifyPlaylistTarget.Playlist -> {
                     val response = spotifyApi.getPlaylist(playlistId = target.id)
-                        ?: throw NoSuchElementException("Spotify playlist not found: ${target.id}")
-                    return@runCatching spotifyMapper.toDomain(response)
+                    return@runCatching spotifyMapper.toDomain(playlistId = target.id, dto = response)
                 }
             }
         }

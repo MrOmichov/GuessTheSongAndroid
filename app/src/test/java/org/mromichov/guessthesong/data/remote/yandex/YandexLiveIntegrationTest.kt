@@ -14,7 +14,7 @@ class YandexLiveIntegrationTest {
     private val api = YandexApi(realClient)
     private val parser = YandexPlaylistUrlParser()
     private val mapper = YandexMapper()
-    private val spotifyApi = org.mromichov.guessthesong.data.remote.spotify.SpotifyApi(org.mromichov.guessthesong.data.remote.spotify.SpotifyConfig("", ""))
+    private val spotifyApi = org.mromichov.guessthesong.data.remote.spotify.SpotifyApi(realClient)
     private val spotifyParser = org.mromichov.guessthesong.data.remote.spotify.SpotifyPlaylistUrlParser()
     private val spotifyMapper = org.mromichov.guessthesong.data.remote.spotify.SpotifyMapper()
     private val repository = PlaylistRepositoryImpl(
