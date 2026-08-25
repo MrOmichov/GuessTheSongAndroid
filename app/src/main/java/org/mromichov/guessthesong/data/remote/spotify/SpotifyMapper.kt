@@ -1,5 +1,6 @@
 package org.mromichov.guessthesong.data.remote.spotify
 
+import org.mromichov.guessthesong.core.exception.TrackCountException
 import com.adamratzman.spotify.models.Playlist as SpotifyPlaylistDto
 import com.adamratzman.spotify.models.Track as SpotifyTrackDto
 import org.mromichov.guessthesong.domain.model.Playlist
@@ -27,6 +28,8 @@ class SpotifyMapper @Inject constructor() {
             val track = playlistTrack.track as? SpotifyTrackDto
             track?.let { toDomain(it) }
         }
+
+        if (domainTracks.size < 20) throw TrackCountException()
 
         return Playlist(
             id = dto.id,
