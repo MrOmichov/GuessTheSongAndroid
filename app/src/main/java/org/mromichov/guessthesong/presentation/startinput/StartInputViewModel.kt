@@ -27,12 +27,10 @@ class StartInputViewModel @Inject constructor(
                         gameManager.prepareRounds(playlist)
                         _uiState.value = StartInputUiState.Success(playlist)
                     } catch (error: Exception) {
-                        Log.e("preparePlaylist", error.message.toString())
                         _uiState.value = StartInputUiState.Error(error.message ?: "Ошибка загрузки плейлиста")
                     }
                 }
                 .onFailure { error ->
-                    Log.e("loadingPlaylist", error.message.toString())
                     _uiState.value = StartInputUiState.Error(error.message ?: "Ошибка загрузки плейлиста")
                 }
 
