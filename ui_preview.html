@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guess The Song — UI/UX Design System & Android Screen Reference</title>
+  
+  <!-- Google Fonts: Montserrat (matches Type.kt in project) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================================================
+       1. CSS VARIABLES & THEME TOKENS (Synchronized with Color.kt & Theme.kt)
+       ========================================================================== */
+    :root {
+      /* Colors from Color.kt */
+      --color-mint-primary: #1DB954;
+      --color-mint-primary-dark: #14833B;
+      --color-mint-glow: rgba(29, 185, 84, 0.35);
+      --color-cyan-secondary: #00D2B4;
+      --color-cyan-glow: rgba(0, 210, 180, 0.3);
+      --color-amber-tertiary: #FFB703;
+      --color-amber-glow: rgba(255, 183, 3, 0.3);
+      
+      --color-dark-bg: #0B0E14;
+      --color-dark-surface: #151B23;
+      --color-dark-surface-elevated: #1A222D;
+      --color-dark-surface-variant: #1F2631;
+      --color-dark-border: #2E3846;
+      --color-dark-border-subtle: rgba(255, 255, 255, 0.07);
+      
+      --color-text-primary: #F1F5F9;
+      --color-text-secondary: #94A3B8;
+      --color-text-muted: #64748B;
+      
+      --color-answer-correct: #10B981;
+      --color-answer-correct-bg: rgba(16, 185, 129, 0.15);
+      --color-answer-wrong: #EF4444;
+      --color-answer-wrong-bg: rgba(239, 68, 68, 0.15);
+
+      /* Layout & Spacing */
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --radius-full: 9999px;
+      
+      --font-main: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #06080C;
+      color: var(--color-text-primary);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Background Ambient Gradients */
+    .ambient-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .ambient-blob-1 {
+      position: absolute;
+      top: -150px;
+      left: 20%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(29, 185, 84, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+      filter: blur(60px);
+    }
+    .ambient-blob-2 {
+      position: absolute;
+      bottom: -100px;
+      right: 15%;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(0, 210, 180, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+      filter: blur(60px);
+    }
+
+    /* Top Global Header */
+    header.hub-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11, 14, 20, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--color-dark-border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .hub-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hub-logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--color-mint-primary), var(--color-cyan-secondary));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      box-shadow: 0 0 18px var(--color-mint-glow);
+    }
+    .hub-title h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .hub-title span {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      display: block;
+    }
+
+    /* Screen Selector Tabs */
+    .tab-nav {
+      display: flex;
+      align-items: center;
+      background: var(--color-dark-surface);
+      padding: 4px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-dark-border);
+      gap: 4px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--color-text-secondary);
+      font-family: var(--font-main);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background: var(--color-dark-surface-variant);
+    }
+    .tab-btn.active {
+      background: var(--color-mint-primary);
+      color: #0B0E14;
+      font-weight: 700;
+      box-shadow: 0 2px 12px var(--color-mint-glow);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-toggle-view {
+      background: var(--color-dark-surface-variant);
+      border: 1px solid var(--color-dark-border);
+      color: var(--color-text-primary);
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-main);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-toggle-view:hover {
+      border-color: var(--color-mint-primary);
+      color: #fff;
+    }
+
+    /* Main Container */
+    main.hub-content {
+      position: relative;
+      z-index: 10;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(380px, 440px) 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      main.hub-content {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+    }
+
+    /* ==========================================================================
+       2. MOBILE DEVICE FRAME (Jetpack Compose Viewport Prototype)
+       ========================================================================== */
+    .device-showcase {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 420px;
+    }
+    .device-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      font-family: var(--font-mono);
+      background: var(--color-dark-surface);
+      padding: 4px 14px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-dark-border);
+    }
+    .device-badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-mint-primary);
+      box-shadow: 0 0 8px var(--color-mint-primary);
+    }
+
+    .phone-mockup {
+      width: 100%;
+      height: 840px;
+      background: var(--color-dark-bg);
+      border-radius: 46px;
+      border: 8px solid #1E2530;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Android Status Bar */
+    .android-status-bar {
+      height: 38px;
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      user-select: none;
+      z-index: 50;
+      background: transparent;
+    }
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Screen Frame Content Area */
+    .app-screen-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      scroll-behavior: smooth;
+    }
+    .app-screen-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Android Navigation Bar (Gestural) */
+    .android-nav-bar {
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      background: transparent;
+    }
+    .nav-gesture-handle {
+      width: 108px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.28);
+      border-radius: var(--radius-full);
+    }
+
+    /* ==========================================================================
+       3. SCREEN IMPLEMENTATIONS
+       ========================================================================== */
+    .screen-view {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      padding: 12px 20px 24px 20px;
+      animation: fadeInScreen 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .screen-view.active {
+      display: flex;
+    }
+    @keyframes fadeInScreen {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Common Top Bar */
+    .screen-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      min-height: 48px;
+    }
+    .screen-top-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-icon-mini {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--color-mint-primary), var(--color-cyan-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+    .screen-top-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
+    }
+    .icon-btn-ghost {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      background: var(--color-dark-surface);
+      border: 1px solid var(--color-dark-border);
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .icon-btn-ghost:hover {
+      color: #fff;
+      border-color: var(--color-text-muted);
+    }
+
+    /* --------------------------------------------------------------------------
+       SCREEN 1: START INPUT (Playlist Import & Previews)
+       -------------------------------------------------------------------------- */
+    .hero-greeting {
+      text-align: center;
+      margin: 10px 0 24px 0;
+    }
+    .hero-greeting .badge-sub {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      background: rgba(29, 185, 84, 0.1);
+      border: 1px solid rgba(29, 185, 84, 0.25);
+      color: var(--color-mint-primary);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .hero-greeting h2 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      line-height: 1.25;
+      color: var(--color-text-primary);
+      margin-bottom: 6px;
+    }
+    .hero-greeting p {
+      font-size: 0.85rem;
+      color: var(--color-text-secondary);
+      line-height: 1.45;
+    }
+
+    /* Input Card Container */
+    .input-card-group {
+      background: var(--color-dark-surface);
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    .input-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-icon-start {
+      position: absolute;
+      left: 14px;
+      color: var(--color-text-muted);
+      pointer-events: none;
+    }
+    .custom-app-input {
+      width: 100%;
+      background: var(--color-dark-surface-variant);
+      border: 1.5px solid var(--color-dark-border);
+      border-radius: var(--radius-md);
+      padding: 14px 44px 14px 42px;
+      color: var(--color-text-primary);
+      font-family: var(--font-main);
+      font-size: 0.88rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .custom-app-input:focus {
+      border-color: var(--color-mint-primary);
+      box-shadow: 0 0 0 3px var(--color-mint-glow);
+    }
+    .custom-app-input::placeholder {
+      color: var(--color-text-muted);
+      font-size: 0.82rem;
+    }
+    .btn-paste-shortcut {
+      position: absolute;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--color-text-secondary);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-paste-shortcut:hover {
+      background: var(--color-mint-primary);
+      color: #000;
+    }
+
+    /* Service Tags */
+    .services-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .service-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-dark-border-subtle);
+    }
+    .service-badge.yandex { color: #FC3F1D; border-color: rgba(252, 63, 29, 0.2); }
+    .service-badge.spotify { color: #1DB954; border-color: rgba(29, 185, 84, 0.2); }
+
+    /* Action Buttons */
+    .btn-main-primary {
+      width: 100%;
+      background: var(--color-mint-primary);
+      color: #0B0E14;
+      font-family: var(--font-main);
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 15px 20px;
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 18px var(--color-mint-glow);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-main-primary:hover {
+      background: #23db64;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px var(--color-mint-glow);
+    }
+    .btn-main-primary:active {
+      transform: translateY(1px);
+    }
+    .btn-main-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Preset Playlists Section */
+    .preset-section {
+      margin-top: 20px;
+    }
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .preset-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .preset-card {
+      background: var(--color-dark-surface);
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .preset-card:hover {
+      border-color: var(--color-mint-primary);
+      background: var(--color-dark-surface-elevated);
+      transform: translateX(3px);
+    }
+    .preset-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .preset-icon-cover {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #FF5E62, #FF9966);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    .preset-icon-cover.rock { background: linear-gradient(135deg, #8A2387, #E94057, #F27121); }
+    .preset-icon-cover.synth { background: linear-gradient(135deg, #4E65FF, #92EFFD); }
+    .preset-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+    .preset-meta {
+      font-size: 0.72rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* Loaded Playlist Card Preview */
+    .loaded-playlist-preview {
+      background: linear-gradient(180deg, rgba(29, 185, 84, 0.08) 0%, var(--color-dark-surface) 100%);
+      border: 1.5px solid rgba(29, 185, 84, 0.4);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-top: 18px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .playlist-header-flex {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .playlist-cover-art {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1DB954, #00D2B4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
+    }
+    .playlist-details h3 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+    .playlist-details p {
+      font-size: 0.76rem;
+      color: var(--color-text-secondary);
+    }
+    .status-ready-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--color-mint-primary);
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    /* --------------------------------------------------------------------------
+       SCREEN 2: GAMEPLAY (Guessing & Audio Preview State)
+       -------------------------------------------------------------------------- */
+    .gameplay-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .game-stat-badge {
+      background: var(--color-dark-surface);
+      border: 1px solid var(--color-dark-border);
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .game-stat-badge.round { color: var(--color-cyan-secondary); }
+    .game-stat-badge.streak { color: var(--color-amber-tertiary); }
+    .game-stat-badge.score { color: var(--color-mint-primary); }
+
+    /* Audio Visualizer & Player Arena */
+    .audio-arena {
+      background: radial-gradient(circle at 50% 30%, rgba(29, 185, 84, 0.12) 0%, var(--color-dark-surface) 85%);
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-xl);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+    
+    /* Animated Vinyl / Music Center */
+    .vinyl-disc-container {
+      width: 130px;
+      height: 130px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .vinyl-disc {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: repeating-radial-gradient(#111 0, #111 4px, #222 5px, #111 6px);
+      border: 3px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.8), 0 0 15px var(--color-mint-glow);
+      animation: spinVinyl 6s linear infinite;
+    }
+    .vinyl-center {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-mint-primary), var(--color-cyan-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-size: 1.2rem;
+    }
+    @keyframes spinVinyl {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Sound Wave Bars */
+    .waveform-visualizer {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 36px;
+      margin-bottom: 12px;
+    }
+    .wave-bar {
+      width: 4px;
+      background: var(--color-mint-primary);
+      border-radius: var(--radius-full);
+      animation: soundPulse 1.2s ease-in-out infinite alternate;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.2s; height: 18px; }
+    .wave-bar:nth-child(3) { animation-delay: 0.4s; height: 28px; background: var(--color-cyan-secondary); }
+    .wave-bar:nth-child(4) { animation-delay: 0.1s; height: 34px; }
+    .wave-bar:nth-child(5) { animation-delay: 0.5s; height: 22px; }
+    .wave-bar:nth-child(6) { animation-delay: 0.3s; height: 30px; background: var(--color-cyan-secondary); }
+    .wave-bar:nth-child(7) { animation-delay: 0.6s; height: 16px; }
+
+    @keyframes soundPulse {
+      0% { height: 8px; opacity: 0.4; }
+      100% { height: 32px; opacity: 1; }
+    }
+
+    /* Circular / Linear Countdown Timer */
+    .timer-container {
+      width: 100%;
+      margin-top: 4px;
+    }
+    .timer-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      margin-bottom: 6px;
+    }
+    .timer-bar-track {
+      width: 100%;
+      height: 6px;
+      background: var(--color-dark-surface-variant);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .timer-bar-fill {
+      height: 100%;
+      width: 65%;
+      background: linear-gradient(90deg, var(--color-cyan-secondary), var(--color-mint-primary));
+      border-radius: var(--radius-full);
+      box-shadow: 0 0 10px var(--color-mint-glow);
+      transition: width 1s linear;
+    }
+
+    /* Multiple Choice Answer Options */
+    .answers-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .answer-option-btn {
+      background: var(--color-dark-surface);
+      border: 1.5px solid var(--color-dark-border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--color-text-primary);
+      cursor: pointer;
+      text-align: left;
+      font-family: var(--font-main);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .answer-option-btn:hover {
+      border-color: rgba(29, 185, 84, 0.6);
+      background: var(--color-dark-surface-elevated);
+      transform: translateY(-2px);
+    }
+    .answer-option-btn:active {
+      transform: scale(0.98);
+    }
+    .answer-key-pill {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--color-dark-surface-variant);
+      border: 1px solid var(--color-dark-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      flex-shrink: 0;
+    }
+    .answer-text-col {
+      flex: 1;
+    }
+    .answer-track-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #fff;
+    }
+    .answer-track-artist {
+      font-size: 0.74rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* States for Answer Cards */
+    .answer-option-btn.correct {
+      border-color: var(--color-answer-correct) !important;
+      background: var(--color-answer-correct-bg) !important;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
+    }
+    .answer-option-btn.correct .answer-key-pill {
+      background: var(--color-answer-correct);
+      color: #000;
+      border-color: transparent;
+    }
+    .answer-option-btn.wrong {
+      border-color: var(--color-answer-wrong) !important;
+      background: var(--color-answer-wrong-bg) !important;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.25);
+    }
+    .answer-option-btn.wrong .answer-key-pill {
+      background: var(--color-answer-wrong);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    /* Power-ups Bar */
+    .powerups-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .powerup-btn {
+      background: var(--color-dark-surface);
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-full);
+      padding: 6px 14px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .powerup-btn:hover {
+      color: #fff;
+      border-color: var(--color-amber-tertiary);
+    }
+
+    /* --------------------------------------------------------------------------
+       SCREEN 3: ROUND RESULT / TRACK REVEAL MODAL
+       -------------------------------------------------------------------------- */
+    .reveal-card {
+      background: var(--color-dark-surface);
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      text-align: center;
+      margin: auto 0;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+    }
+    .reveal-result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 18px;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 18px;
+    }
+    .reveal-result-badge.win {
+      background: rgba(16, 185, 129, 0.18);
+      color: var(--color-answer-correct);
+      border: 1px solid var(--color-answer-correct);
+    }
+    .reveal-result-badge.lose {
+      background: rgba(239, 68, 68, 0.18);
+      color: var(--color-answer-wrong);
+      border: 1px solid var(--color-answer-wrong);
+    }
+
+    .reveal-cover-frame {
+      width: 140px;
+      height: 140px;
+      border-radius: 20px;
+      margin: 0 auto 16px auto;
+      background: linear-gradient(135deg, #1DB954, #00D2B4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      position: relative;
+    }
+    .reveal-song-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .reveal-artist {
+      font-size: 0.88rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 16px;
+    }
+    .score-gain-pill {
+      background: var(--color-dark-surface-variant);
+      border: 1px solid var(--color-dark-border);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--color-mint-primary);
+      margin-bottom: 20px;
+    }
+
+    /* --------------------------------------------------------------------------
+       SCREEN 4: GAME OVER / SUMMARY (Final Score & Track Review)
+       -------------------------------------------------------------------------- */
+    .gameover-summary {
+      text-align: center;
+      padding-top: 10px;
+    }
+    .trophy-container {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 183, 3, 0.2) 0%, rgba(255, 183, 3, 0.02) 80%);
+      border: 2px solid var(--color-amber-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      margin: 0 auto 12px auto;
+      box-shadow: 0 0 25px var(--color-amber-glow);
+    }
+    .gameover-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .gameover-subtitle {
+      font-size: 0.84rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 18px;
+    }
+
+    /* Stats Grid */
+    .stats-summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .stat-summary-card {
+      background: var(--color-dark-surface);
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      text-align: center;
+    }
+    .stat-summary-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--color-mint-primary);
+      line-height: 1.2;
+    }
+    .stat-summary-card.amber .stat-summary-value { color: var(--color-amber-tertiary); }
+    .stat-summary-card.cyan .stat-summary-value { color: var(--color-cyan-secondary); }
+    .stat-summary-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Results Track List Accordion */
+    .track-history-list {
+      background: var(--color-dark-surface);
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-lg);
+      padding: 10px;
+      margin-bottom: 20px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border-bottom: 1px solid var(--color-dark-border-subtle);
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+    }
+    .history-status-icon {
+      font-size: 0.9rem;
+    }
+    .history-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .history-artist {
+      font-size: 0.68rem;
+      color: var(--color-text-secondary);
+    }
+    .btn-replay-sample {
+      background: transparent;
+      border: none;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .btn-replay-sample:hover {
+      color: var(--color-mint-primary);
+    }
+
+    /* ==========================================================================
+       4. DESIGN SYSTEM / DEVELOPER DOCUMENTATION PANEL (Right Column)
+       ========================================================================== */
+    .dev-docs-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .doc-section {
+      background: var(--color-dark-surface);
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .doc-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--color-dark-border);
+    }
+    .doc-section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .doc-section-tag {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      background: var(--color-dark-surface-variant);
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: var(--color-text-secondary);
+    }
+
+    /* Color Swatches Grid */
+    .swatches-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 12px;
+    }
+    .color-swatch-card {
+      background: var(--color-dark-surface-variant);
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      transition: all 0.2s;
+    }
+    .color-swatch-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .swatch-color-box {
+      height: 38px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .swatch-name {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .swatch-hex {
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      color: var(--color-text-secondary);
+    }
+
+    /* Compose Code Snippets */
+    .code-block {
+      background: #080A0E;
+      border: 1px solid var(--color-dark-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: #E2E8F0;
+      overflow-x: auto;
+      line-height: 1.5;
+      position: relative;
+    }
+    .code-block .keyword { color: #F472B6; font-weight: 600; }
+    .code-block .type { color: #38BDF8; font-weight: 600; }
+    .code-block .string { color: #34D399; }
+    .code-block .comment { color: #64748B; font-style: italic; }
+    .code-block .fn { color: #FBBF24; }
+
+    /* Interactive Helper / Toast */
+    .toast-popup {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--color-dark-surface-elevated);
+      border: 1px solid var(--color-mint-primary);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast-popup.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Ambient background glow elements -->
+  <div class="ambient-bg">
+    <div class="ambient-blob-1"></div>
+    <div class="ambient-blob-2"></div>
+  </div>
+
+  <!-- Main Top Bar Hub -->
+  <header class="hub-header">
+    <div class="hub-brand">
+      <div class="hub-logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"></path>
+          <circle cx="6" cy="18" r="3"></circle>
+          <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+      </div>
+      <div class="hub-title">
+        <h1>Guess The Song — UI Architecture</h1>
+        <span>Jetpack Compose UI Layout Prototype & Design System</span>
+      </div>
+    </div>
+
+    <!-- Screen Switcher Tabs -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" onclick="switchScreen('screen-start')">
+        <span>1. Ввод плейлиста</span>
+      </button>
+      <button class="tab-btn" onclick="switchScreen('screen-game')">
+        <span>2. Игра (Квиз)</span>
+      </button>
+      <button class="tab-btn" onclick="switchScreen('screen-reveal')">
+        <span>3. Ответ / Reveal</span>
+      </button>
+      <button class="tab-btn" onclick="switchScreen('screen-summary')">
+        <span>4. Итоги матча</span>
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <button class="btn-toggle-view" onclick="triggerInteractiveSimulation()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        Демо симуляции
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Showcase Grid -->
+  <main class="hub-content">
+    
+    <!-- LEFT: Interactive Android Smartphone Viewport -->
+    <section class="device-showcase">
+      <div class="device-badge">
+        <div class="device-badge-dot"></div>
+        <span>ANDROID COMPOSE PREVIEW • 390 × 844 DP</span>
+      </div>
+
+      <div class="phone-mockup">
+        <!-- Status Bar -->
+        <div class="android-status-bar">
+          <span>19:48</span>
+          <div class="status-icons">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+          </div>
+        </div>
+
+        <!-- Application Screens Container -->
+        <div class="app-screen-container">
+
+          <!-- ========================================== -->
+          <!-- SCREEN 1: START INPUT (StartInputScreen)   -->
+          <!-- ========================================== -->
+          <div id="screen-start" class="screen-view active">
+            <!-- App Bar -->
+            <div class="screen-top-bar">
+              <div class="screen-top-brand">
+                <div class="brand-icon-mini">♫</div>
+                <div class="screen-top-title">Guess the Song</div>
+              </div>
+              <button class="icon-btn-ghost" title="Настройки">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              </button>
+            </div>
+
+            <!-- Hero Intro -->
+            <div class="hero-greeting">
+              <div class="badge-sub">Музыкальная Викторина</div>
+              <h2>Угадай трек по короткому отрывку</h2>
+              <p>Вставь ссылку на плейлист из Яндекс Музыки или выбери готовый</p>
+            </div>
+
+            <!-- Input Box -->
+            <div class="input-card-group">
+              <div class="input-label-row">
+                <span>Ссылка на плейлист</span>
+                <span style="color: var(--color-mint-primary);">HTTPS</span>
+              </div>
+              
+              <div class="input-wrapper">
+                <svg class="input-icon-start" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <input 
+                  id="playlist-url-input" 
+                  class="custom-app-input" 
+                  type="text" 
+                  placeholder="https://music.yandex.ru/users/..."
+                  value="https://music.yandex.ru/users/music-blog/playlists/1042"
+                />
+                <button class="btn-paste-shortcut" onclick="pasteSampleUrl()">Тест URL</button>
+              </div>
+
+              <div class="services-tag-row">
+                <div class="service-badge yandex">● Яндекс Музыка</div>
+                <div class="service-badge spotify">● Spotify (в разработке)</div>
+              </div>
+            </div>
+
+            <!-- Load / Start Action -->
+            <button id="btn-load-playlist" class="btn-main-primary" onclick="simulateLoadPlaylist()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Загрузить плейлист</span>
+            </button>
+
+            <!-- Loaded Playlist Preview (Shows when loaded) -->
+            <div id="loaded-playlist-card" class="loaded-playlist-preview">
+              <div class="playlist-header-flex">
+                <div class="playlist-cover-art">🔥</div>
+                <div class="playlist-details">
+                  <h3>Громкие хиты 2024</h3>
+                  <p>Яндекс Музыка • 25 треков с аудио-превью</p>
+                  <div class="status-ready-pill">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Готово к игре
+                  </div>
+                </div>
+              </div>
+              <button class="btn-main-primary" onclick="switchScreen('screen-game')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <span>Начать викторину</span>
+              </button>
+            </div>
+
+            <!-- Preset Quick Collections -->
+            <div class="preset-section">
+              <div class="section-title">
+                <span>Быстрый старт (Готовые коллекции)</span>
+              </div>
+              <div class="preset-chips">
+                <div class="preset-card" onclick="selectPreset('Русский Рок 2000-х', 'rock')">
+                  <div class="preset-info">
+                    <div class="preset-icon-cover rock">🎸</div>
+                    <div>
+                      <div class="preset-title">Русский Рок 2000-х</div>
+                      <div class="preset-meta">Би-2, Сплин, Король и Шут • 40 треков</div>
+                    </div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+
+                <div class="preset-card" onclick="selectPreset('Synthwave & Retro 80s', 'synth')">
+                  <div class="preset-info">
+                    <div class="preset-icon-cover synth">🌆</div>
+                    <div>
+                      <div class="preset-title">Retrowave & 80s Drive</div>
+                      <div class="preset-meta">Kavinsky, The Weeknd • 30 треков</div>
+                    </div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- ========================================== -->
+          <!-- SCREEN 2: GAMEPLAY (GameScreen)            -->
+          <!-- ========================================== -->
+          <div id="screen-game" class="screen-view">
+            <!-- Game Top Header Stats -->
+            <div class="gameplay-header">
+              <div class="game-stat-badge round">
+                <span>🎯 Раунд 4/10</span>
+              </div>
+              <div class="game-stat-badge streak">
+                <span>🔥 Стрик: 3x</span>
+              </div>
+              <div class="game-stat-badge score">
+                <span>⭐️ 850 очков</span>
+              </div>
+            </div>
+
+            <!-- Audio Player Center Box -->
+            <div class="audio-arena">
+              <div class="vinyl-disc-container">
+                <div class="vinyl-disc">
+                  <div class="vinyl-center">🎧</div>
+                </div>
+              </div>
+
+              <!-- Animated Sound Wave -->
+              <div class="waveform-visualizer">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+              </div>
+
+              <!-- Countdown Progress Ring / Linear Bar -->
+              <div class="timer-container">
+                <div class="timer-header">
+                  <span>Осталось времени</span>
+                  <span id="countdown-label" style="color: var(--color-cyan-secondary);">00:09</span>
+                </div>
+                <div class="timer-bar-track">
+                  <div id="countdown-fill" class="timer-bar-fill"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Multiple Choice 4 Options -->
+            <div class="answers-grid">
+              <button class="answer-option-btn" onclick="handleSelectAnswer(this, false)">
+                <div class="answer-key-pill">A</div>
+                <div class="answer-text-col">
+                  <div class="answer-track-title">Комета</div>
+                  <div class="answer-track-artist">JONY</div>
+                </div>
+              </button>
+
+              <button class="answer-option-btn" onclick="handleSelectAnswer(this, true)">
+                <div class="answer-key-pill">B</div>
+                <div class="answer-text-col">
+                  <div class="answer-track-title">Пыяла</div>
+                  <div class="answer-track-artist">АИГЕЛ</div>
+                </div>
+              </button>
+
+              <button class="answer-option-btn" onclick="handleSelectAnswer(this, false)">
+                <div class="answer-key-pill">C</div>
+                <div class="answer-text-col">
+                  <div class="answer-track-title">Молния</div>
+                  <div class="answer-track-artist">Дима Билан</div>
+                </div>
+              </button>
+
+              <button class="answer-option-btn" onclick="handleSelectAnswer(this, false)">
+                <div class="answer-key-pill">D</div>
+                <div class="answer-text-col">
+                  <div class="answer-track-title">Юность</div>
+                  <div class="answer-track-artist">Добро</div>
+                </div>
+              </button>
+            </div>
+
+            <!-- Lifelines / Hints -->
+            <div class="powerups-bar">
+              <button class="powerup-btn" onclick="useHint('5050')">
+                <span>⚡ 50 / 50</span>
+              </button>
+              <button class="powerup-btn" onclick="useHint('time')">
+                <span>⏳ +5 сек</span>
+              </button>
+              <button class="powerup-btn" onclick="switchScreen('screen-reveal')">
+                <span>⏩ Пропустить</span>
+              </button>
+            </div>
+          </div>
+
+
+          <!-- ========================================== -->
+          <!-- SCREEN 3: REVEAL MODAL (Round Result)      -->
+          <!-- ========================================== -->
+          <div id="screen-reveal" class="screen-view">
+            <div class="reveal-card">
+              <div class="reveal-result-badge win">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                В точку! Правильный ответ
+              </div>
+
+              <div class="reveal-cover-frame">
+                ⚡
+              </div>
+
+              <div class="reveal-song-title">Пыяла</div>
+              <div class="reveal-artist">АИГЕЛ • Альбом «Эдем» (2020)</div>
+
+              <div class="score-gain-pill">
+                <span>+250 очков</span>
+                <span style="color: var(--color-amber-tertiary);">• Бонус за скорость x1.5</span>
+              </div>
+
+              <button class="btn-main-primary" onclick="switchScreen('screen-summary')">
+                <span>Следующий трек</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
+
+
+          <!-- ========================================== -->
+          <!-- SCREEN 4: GAME OVER SUMMARY (GameOver)     -->
+          <!-- ========================================== -->
+          <div id="screen-summary" class="screen-view">
+            <div class="gameover-summary">
+              <div class="trophy-container">🏆</div>
+              <div class="gameover-title">Музыкальный Эксперт!</div>
+              <div class="gameover-subtitle">Отличный результат, ты угадал большинство треков</div>
+
+              <!-- Stats Cards -->
+              <div class="stats-summary-grid">
+                <div class="stat-summary-card">
+                  <div class="stat-summary-value">2 450</div>
+                  <div class="stat-summary-label">Финальный счёт</div>
+                </div>
+                <div class="stat-summary-card cyan">
+                  <div class="stat-summary-value">9 / 10</div>
+                  <div class="stat-summary-label">Точность (90%)</div>
+                </div>
+                <div class="stat-summary-card amber">
+                  <div class="stat-summary-value">🔥 6</div>
+                  <div class="stat-summary-label">Макс. серия</div>
+                </div>
+                <div class="stat-summary-card">
+                  <div class="stat-summary-value">2.8с</div>
+                  <div class="stat-summary-label">Ср. время ответа</div>
+                </div>
+              </div>
+
+              <!-- Track Breakdown -->
+              <div class="section-title" style="margin-top: 6px;">
+                <span>Треки из этого раунда</span>
+              </div>
+              <div class="track-history-list">
+                <div class="history-item">
+                  <div class="history-info">
+                    <span class="history-status-icon" style="color: var(--color-answer-correct);">✓</span>
+                    <div>
+                      <div class="history-title">Пыяла</div>
+                      <div class="history-artist">АИГЕЛ</div>
+                    </div>
+                  </div>
+                  <button class="btn-replay-sample" title="Слушать фрагмент">▶</button>
+                </div>
+
+                <div class="history-item">
+                  <div class="history-info">
+                    <span class="history-status-icon" style="color: var(--color-answer-correct);">✓</span>
+                    <div>
+                      <div class="history-title">Группа крови</div>
+                      <div class="history-artist">Кино</div>
+                    </div>
+                  </div>
+                  <button class="btn-replay-sample" title="Слушать фрагмент">▶</button>
+                </div>
+
+                <div class="history-item">
+                  <div class="history-info">
+                    <span class="history-status-icon" style="color: var(--color-answer-wrong);">✗</span>
+                    <div>
+                      <div class="history-title">Кукла колдуна</div>
+                      <div class="history-artist">Король и Шут</div>
+                    </div>
+                  </div>
+                  <button class="btn-replay-sample" title="Слушать фрагмент">▶</button>
+                </div>
+              </div>
+
+              <!-- Final Buttons -->
+              <button class="btn-main-primary" onclick="switchScreen('screen-game')" style="margin-bottom: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path></svg>
+                <span>Сыграть ещё раз</span>
+              </button>
+              
+              <button class="btn-toggle-view" style="width: 100%; justify-content: center; padding: 12px;" onclick="switchScreen('screen-start')">
+                <span>Выбрать другой плейлист</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Android Gesture Nav Handle -->
+        <div class="android-nav-bar">
+          <div class="nav-gesture-handle"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: JETPACK COMPOSE DESIGN SYSTEM & CODE GUIDES -->
+    <section class="dev-docs-panel">
+
+      <!-- 1. Theme Color Palette -->
+      <div class="doc-section">
+        <div class="doc-section-header">
+          <div class="doc-section-title">
+            <span>🎨 Цветовая палитра (Color.kt)</span>
+          </div>
+          <span class="doc-section-tag">Compose Design Tokens</span>
+        </div>
+
+        <div class="swatches-grid">
+          <div class="color-swatch-card" onclick="copySnippet('val MintPrimary = Color(0xFF1DB954)')">
+            <div class="swatch-color-box" style="background: #1DB954;"></div>
+            <div class="swatch-name">MintPrimary</div>
+            <div class="swatch-hex">#1DB954</div>
+          </div>
+          <div class="color-swatch-card" onclick="copySnippet('val CyanSecondary = Color(0xFF00D2B4)')">
+            <div class="swatch-color-box" style="background: #00D2B4;"></div>
+            <div class="swatch-name">CyanSecondary</div>
+            <div class="swatch-hex">#00D2B4</div>
+          </div>
+          <div class="color-swatch-card" onclick="copySnippet('val AmberTertiary = Color(0xFFFFB703)')">
+            <div class="swatch-color-box" style="background: #FFB703;"></div>
+            <div class="swatch-name">AmberTertiary</div>
+            <div class="swatch-hex">#FFB703</div>
+          </div>
+          <div class="color-swatch-card" onclick="copySnippet('val DarkBackground = Color(0xFF0B0E14)')">
+            <div class="swatch-color-box" style="background: #0B0E14;"></div>
+            <div class="swatch-name">DarkBackground</div>
+            <div class="swatch-hex">#0B0E14</div>
+          </div>
+          <div class="color-swatch-card" onclick="copySnippet('val DarkSurface = Color(0xFF151B23)')">
+            <div class="swatch-color-box" style="background: #151B23;"></div>
+            <div class="swatch-name">DarkSurface</div>
+            <div class="swatch-hex">#151B23</div>
+          </div>
+          <div class="color-swatch-card" onclick="copySnippet('val DarkSurfaceVariant = Color(0xFF1F2631)')">
+            <div class="swatch-color-box" style="background: #1F2631;"></div>
+            <div class="swatch-name">DarkSurfaceVariant</div>
+            <div class="swatch-hex">#1F2631</div>
+          </div>
+          <div class="color-swatch-card" onclick="copySnippet('val AnswerCorrect = Color(0xFF10B981)')">
+            <div class="swatch-color-box" style="background: #10B981;"></div>
+            <div class="swatch-name">AnswerCorrect</div>
+            <div class="swatch-hex">#10B981</div>
+          </div>
+          <div class="color-swatch-card" onclick="copySnippet('val AnswerWrong = Color(0xFFEF4444)')">
+            <div class="swatch-color-box" style="background: #EF4444;"></div>
+            <div class="swatch-name">AnswerWrong</div>
+            <div class="swatch-hex">#EF4444</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Recommended Jetpack Compose Layout Snippets -->
+      <div class="doc-section">
+        <div class="doc-section-header">
+          <div class="doc-section-title">
+            <span>🧩 Готовые сниппеты для верстки Compose</span>
+          </div>
+          <span class="doc-section-tag">Kotlin Jetpack Compose</span>
+        </div>
+
+        <p style="font-size: 0.84rem; color: var(--color-text-secondary); margin-bottom: 14px;">
+          Скопируйте эти готовые структуры для реализации экрана игры (<strong>GameScreen.kt</strong>) и карточек выбора:
+        </p>
+
+        <!-- Snippet 1 -->
+        <div style="font-size: 0.78rem; font-weight: 700; color: var(--color-cyan-secondary); margin-bottom: 6px;">
+          1. AnswerOptionButton (Карточка варианта ответа)
+        </div>
+        <pre class="code-block"><code><span class="keyword">@Composable</span>
+<span class="keyword">fun</span> <span class="fn">AnswerOptionCard</span>(
+    letter: <span class="type">String</span>,
+    title: <span class="type">String</span>,
+    artist: <span class="type">String</span>,
+    state: <span class="type">AnswerState</span>, <span class="comment">// Default, Correct, Wrong</span>
+    onClick: () -&gt; <span class="type">Unit</span>
+) {
+    <span class="keyword">val</span> borderColor = <span class="keyword">when</span> (state) {
+        AnswerState.Correct -&gt; AnswerCorrect
+        AnswerState.Wrong -&gt; AnswerWrong
+        <span class="keyword">else</span> -&gt; MaterialTheme.colorScheme.outline
+    }
+    <span class="keyword">val</span> containerColor = <span class="keyword">when</span> (state) {
+        AnswerState.Correct -&gt; AnswerCorrect.copy(alpha = <span class="string">0.15f</span>)
+        AnswerState.Wrong -&gt; AnswerWrong.copy(alpha = <span class="string">0.15f</span>)
+        <span class="keyword">else</span> -&gt; MaterialTheme.colorScheme.surface
+    }
+
+    <span class="fn">Surface</span>(
+        onClick = onClick,
+        shape = <span class="fn">RoundedCornerShape</span>(<span class="string">16.dp</span>),
+        color = containerColor,
+        border = <span class="fn">BorderStroke</span>(<span class="string">1.5.dp</span>, borderColor),
+        modifier = Modifier.<span class="fn">fillMaxWidth</span>()
+    ) {
+        <span class="fn">Row</span>(
+            modifier = Modifier.<span class="fn">padding</span>(<span class="string">14.dp</span>),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            <span class="comment">// Буква A, B, C, D</span>
+            <span class="fn">Box</span>(
+                modifier = Modifier
+                    .<span class="fn">size</span>(<span class="string">32.dp</span>)
+                    .<span class="fn">background</span>(MaterialTheme.colorScheme.surfaceVariant, <span class="fn">RoundedCornerShape</span>(<span class="string">8.dp</span>)),
+                contentAlignment = Alignment.Center
+            ) {
+                <span class="fn">Text</span>(text = letter, fontWeight = FontWeight.Bold, color = TextPrimary)
+            }
+            <span class="fn">Spacer</span>(modifier = Modifier.<span class="fn">width</span>(<span class="string">12.dp</span>))
+            <span class="fn">Column</span> {
+                <span class="fn">Text</span>(text = title, style = MaterialTheme.typography.titleMedium)
+                <span class="fn">Text</span>(text = artist, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            }
+        }
+    }
+}</code></pre>
+      </div>
+
+      <!-- 3. UX Best Practices for Music Quiz -->
+      <div class="doc-section">
+        <div class="doc-section-header">
+          <div class="doc-section-title">
+            <span>💡 Советы по UX/UI анимациям в Android</span>
+          </div>
+          <span class="doc-section-tag">UX Guidelines</span>
+        </div>
+
+        <ul style="padding-left: 20px; font-size: 0.85rem; line-height: 1.7; color: var(--color-text-secondary);">
+          <li><strong style="color: #fff;">Плавный таймер:</strong> используйте <code>animateFloatAsState</code> для полоски времени, чтобы она не дергалась каждую секунду.</li>
+          <li><strong style="color: #fff;">Визуальный отклик:</strong> при нажатии на карточку варианта подсвечивайте правильный ответ зеленым (<code>AnswerCorrect</code>), а ошибочный — красным (<code>AnswerWrong</code>) с задержкой 1.2 сек перед переходом к следующему треку.</li>
+          <li><strong style="color: #fff;">Edge-to-Edge:</strong> в <code>MainActivity.kt</code> у вас уже включен <code>enableEdgeToEdge()</code> — используйте <code>Modifier.safeDrawingPadding()</code> для корректных отступов под вырез и панель навигации.</li>
+          <li><strong style="color: #fff;">Пластинка и эквалайзер:</strong> анимируйте вращение обложки через <code>rememberInfiniteTransition()</code> при воспроизведении отрывка из <code>AudioPlayer</code>.</li>
+        </ul>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Interactive Toast Notification -->
+  <div id="toast" class="toast-popup">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toast-message">Код скопирован!</span>
+  </div>
+
+  <!-- Interactive Javascript Logic -->
+  <script>
+    function switchScreen(screenId) {
+      // Hide all screens
+      document.querySelectorAll('.screen-view').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      // Deactivate all tabs
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Show selected screen
+      const activeScreen = document.getElementById(screenId);
+      if (activeScreen) {
+        activeScreen.classList.add('active');
+      }
+
+      // Highlight active tab
+      const tabIndexMap = {
+        'screen-start': 0,
+        'screen-game': 1,
+        'screen-reveal': 2,
+        'screen-summary': 3
+      };
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      if (tabBtns[tabIndexMap[screenId]]) {
+        tabBtns[tabIndexMap[screenId]].classList.add('active');
+      }
+    }
+
+    function pasteSampleUrl() {
+      const input = document.getElementById('playlist-url-input');
+      input.value = "https://music.yandex.ru/users/ya.music/playlists/1033";
+      showToast("Тестовый URL Яндекс Музыки вставлен!");
+    }
+
+    function simulateLoadPlaylist() {
+      const btn = document.getElementById('btn-load-playlist');
+      const loadedCard = document.getElementById('loaded-playlist-card');
+      btn.innerHTML = `<span style="display:inline-block; animation: spinVinyl 1s linear infinite;">⏳</span> Загрузка треков...`;
+      
+      setTimeout(() => {
+        btn.style.display = "none";
+        loadedCard.style.display = "block";
+        showToast("Плейлист успешно загружен! 25 треков готово.");
+      }, 700);
+    }
+
+    function selectPreset(name, type) {
+      const loadedCard = document.getElementById('loaded-playlist-card');
+      const btn = document.getElementById('btn-load-playlist');
+      btn.style.display = "none";
+      loadedCard.style.display = "block";
+      showToast(`Выбран сборник: "${name}"`);
+    }
+
+    function handleSelectAnswer(buttonElement, isCorrect) {
+      // Reset other buttons
+      document.querySelectorAll('.answer-option-btn').forEach(btn => {
+        btn.classList.remove('correct', 'wrong');
+      });
+
+      if (isCorrect) {
+        buttonElement.classList.add('correct');
+        showToast("🎉 Правильно! +250 очков");
+        setTimeout(() => {
+          switchScreen('screen-reveal');
+        }, 800);
+      } else {
+        buttonElement.classList.add('wrong');
+        showToast("❌ Ошибка! Правильный ответ был: B (Пыяла)");
+      }
+    }
+
+    function useHint(type) {
+      if (type === '5050') {
+        const buttons = document.querySelectorAll('.answer-option-btn');
+        if (buttons[0]) buttons[0].style.opacity = '0.2';
+        if (buttons[2]) buttons[2].style.opacity = '0.2';
+        showToast("⚡ Подсказка 50/50: Убрано 2 неверных ответа");
+      } else if (type === 'time') {
+        const fill = document.getElementById('countdown-fill');
+        const label = document.getElementById('countdown-label');
+        fill.style.width = '95%';
+        label.innerText = '00:14';
+        showToast("⏳ Добавлено +5 секунд к раунду!");
+      }
+    }
+
+    function copySnippet(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`Скопировано: ${text}`);
+      }).catch(() => {
+        showToast(`Скопировано в буфер!`);
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.innerText = msg;
+      toast.classList.add('visible');
+      setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 2400);
+    }
+
+    function triggerInteractiveSimulation() {
+      switchScreen('screen-start');
+      showToast("Запуск пошаговой демонстрации...");
+      setTimeout(() => {
+        simulateLoadPlaylist();
+        setTimeout(() => {
+          switchScreen('screen-game');
+          showToast("Раунд начался: слушайте фрагмент!");
+        }, 1400);
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

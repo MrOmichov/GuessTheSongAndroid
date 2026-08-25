@@ -1,5 +1,6 @@
 package org.mromichov.guessthesong.presentation.startinput
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,11 +26,13 @@ class StartInputViewModel @Inject constructor(
                     try {
                         gameManager.prepareRounds(playlist)
                         _uiState.value = StartInputUiState.Success(playlist)
-                    } catch (e: Exception) {
-                        _uiState.value = StartInputUiState.Error(e.message ?: "Ошибка загрузки плейлиста")
+                    } catch (error: Exception) {
+                        Log.e("preparePlaylist", error.message.toString())
+                        _uiState.value = StartInputUiState.Error(error.message ?: "Ошибка загрузки плейлиста")
                     }
                 }
                 .onFailure { error ->
+                    Log.e("loadingPlaylist", error.message.toString())
                     _uiState.value = StartInputUiState.Error(error.message ?: "Ошибка загрузки плейлиста")
                 }
 

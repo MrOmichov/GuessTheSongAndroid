@@ -8,9 +8,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.mromichov.guessthesong.App
+import org.mromichov.guessthesong.R
+import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
+import org.mromichov.guessthesong.presentation.startinput.component.InputUrlContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,33 +47,35 @@ fun StartInputScreen(viewModel: StartInputViewModel, onStartGame: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = "Введите ссылку, чтобы начать игру",
-                    style = MaterialTheme.typography.bodyLarge
+                InputUrlContainer(
+                    urlText,
+                    { newValue ->
+                        urlText = newValue
+                    },
+                    uiState
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    modifier = Modifier.width(300.dp),
-                    value = urlText,
-                    onValueChange = { newValue -> urlText = newValue },
-                    singleLine = true,
-                    isError = uiState is StartInputUiState.Error,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedButton(
-                    onClick = {viewModel.loadPlaylist(url = urlText)},
-                    enabled = urlText.isNotBlank() && uiState !is StartInputUiState.Loading,
-                ) {
-                    when (uiState) {
-                        is StartInputUiState.Error -> Text("Загрузить плейлист")
-                        StartInputUiState.Idle -> Text("Загрузить плейлист")
-                        StartInputUiState.Loading -> CircularProgressIndicator()
-                        is StartInputUiState.Success -> Text("Загрузить плейлист")
-                    }
-                }
+                Spacer(Modifier.padding(16.dp))
+
+                AppButton(
+                    icon = painterResource(
+                        when (uiState) {
+                            StartInputUiState.Loading -> R.drawable.sync
+                            else -> R.drawable.download
+                        }
+                    ),
+                    text = when (uiState) {
+                        StartInputUiState.Loading -> ""
+                        else -> "Загрузить плейлист"
+                    },
+                    onClick = { viewModel.loadPlaylist(url = urlText) },
+                    enabled = urlText.isNotBlank() && uiState !is StartInputUiState.Loading
+                )
+
+                Spacer(Modifier.padding(16.dp))
 
                 if (uiState is StartInputUiState.Error) {
                     Text(
@@ -76,11 +83,12 @@ fun StartInputScreen(viewModel: StartInputViewModel, onStartGame: () -> Unit) {
                         modifier = Modifier.width(300.dp),
                     )
                 } else if (uiState is StartInputUiState.Success) {
-                    OutlinedButton(
+                    AppButton(
+                        icon = painterResource(R.drawable.play),
+                        text = "Начать игру",
                         onClick = onStartGame,
-                    ) {
-                        Text("Начать игру")
-                    }
+                    )
+
                     Text(
                         text = (uiState as StartInputUiState.Success).playlist.title,
                         modifier = Modifier.width(300.dp),
