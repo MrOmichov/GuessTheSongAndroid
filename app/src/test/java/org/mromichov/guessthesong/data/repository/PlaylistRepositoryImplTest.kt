@@ -13,6 +13,10 @@ import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mromichov.guessthesong.data.remote.spotify.SpotifyApi
+import org.mromichov.guessthesong.data.remote.spotify.SpotifyConfig
+import org.mromichov.guessthesong.data.remote.spotify.SpotifyMapper
+import org.mromichov.guessthesong.data.remote.spotify.SpotifyPlaylistUrlParser
 import org.mromichov.guessthesong.data.remote.yandex.YandexApi
 import org.mromichov.guessthesong.data.remote.yandex.YandexMapper
 import org.mromichov.guessthesong.data.remote.yandex.YandexPlaylistUrlParser
@@ -25,16 +29,28 @@ class PlaylistRepositoryImplTest {
         ignoreUnknownKeys = true
     }
 
-    private fun createRepository(mockEngine: MockEngine): PlaylistRepositoryImpl {
+    private fun createRepository(
+        mockEngine: MockEngine,
+        spotifyApi: SpotifyApi = SpotifyApi(SpotifyConfig("dummy", "dummy")),
+        spotifyUrlParser: SpotifyPlaylistUrlParser = SpotifyPlaylistUrlParser(),
+        spotifyMapper: SpotifyMapper = SpotifyMapper()
+    ): PlaylistRepositoryImpl {
         val client = HttpClient(mockEngine) {
             install(ContentNegotiation) {
                 json(jsonConfig)
             }
         }
-        val api = YandexApi(client)
-        val parser = YandexPlaylistUrlParser()
-        val mapper = YandexMapper()
-        return PlaylistRepositoryImpl(api, parser, mapper)
+        val yandexApi = YandexApi(client)
+        val yandexParser = YandexPlaylistUrlParser()
+        val yandexMapper = YandexMapper()
+        return PlaylistRepositoryImpl(
+            yandexApi = yandexApi,
+            yandexUrlParser = yandexParser,
+            yandexMapper = yandexMapper,
+            spotifyApi = spotifyApi,
+            spotifyUrlParser = spotifyUrlParser,
+            spotifyMapper = spotifyMapper
+        )
     }
 
     @Test
