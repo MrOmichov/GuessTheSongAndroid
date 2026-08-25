@@ -1,5 +1,6 @@
 package org.mromichov.guessthesong.data.remote.yandex
 
+import org.mromichov.guessthesong.core.exception.TrackCountException
 import org.mromichov.guessthesong.data.remote.yandex.dto.YandexApiPlaylistResponseDto
 import org.mromichov.guessthesong.data.remote.yandex.dto.YandexTrackDto
 import org.mromichov.guessthesong.data.remote.yandex.dto.YandexWebPlaylistResponseDto
@@ -26,6 +27,9 @@ class YandexMapper @Inject constructor() {
     fun toDomain(playlistId: String, dto: YandexWebPlaylistResponseDto): Playlist {
         val webPlaylist = dto.playlist
         val tracks = webPlaylist?.tracks.orEmpty().map { toDomain(it) }
+
+        if (tracks.size < 20) throw TrackCountException()
+
         return Playlist(
             id = playlistId,
             title = webPlaylist?.title.orEmpty(),
