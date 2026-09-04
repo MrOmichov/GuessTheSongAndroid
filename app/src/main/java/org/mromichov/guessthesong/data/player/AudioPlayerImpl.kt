@@ -12,6 +12,7 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.preload.DefaultPreloadManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -52,6 +53,7 @@ class AudioPlayerImpl @Inject constructor(
             }
         }
     }
+
     private fun stopProgressPolling() {
         progressJob?.cancel()
         progressJob = null
@@ -75,13 +77,19 @@ class AudioPlayerImpl @Inject constructor(
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
     }
 
+    val targetPreloadStatusControl = AppTargetPreloadStatusControl()
+    val preloadManagerBuilder = DefaultPreloadManager.Builder(context, targetPreloadStatusControl)
+    val preloadManager = preloadManagerBuilder.build()
+
     private val player: ExoPlayer by lazy {
         val mediaSourceFactory = DefaultMediaSourceFactory(context)
             .setDataSourceFactory(cacheDataSourceFactory)
 
-        ExoPlayer.Builder(context)
-            .setMediaSourceFactory(mediaSourceFactory)
-            .build()
+        val exoPlayerBuilder = ExoPlayer.Builder(context).setMediaSourceFactory(mediaSourceFactory)
+//        ExoPlayer.Builder(context)
+//            .setMediaSourceFactory(mediaSourceFactory)
+//            .build()
+        preloadManagerBuilder.buildExoPlayer(exoPlayerBuilder)
             .apply {
                 volume = 1.0f
                 addListener(object : Player.Listener {
@@ -109,6 +117,7 @@ class AudioPlayerImpl @Inject constructor(
                     }
                 })
             }
+
     }
 
 
@@ -122,7 +131,7 @@ class AudioPlayerImpl @Inject constructor(
                     .build()
             )
             .build()
-        player.setMediaItem(mediaItem, startMs)
+        player.setMediaItem(mediaItem)
         player.prepare()
         player.play()
     }
@@ -139,4 +148,6 @@ class AudioPlayerImpl @Inject constructor(
         scope.cancel()
         player.release()
     }
+
+
 }

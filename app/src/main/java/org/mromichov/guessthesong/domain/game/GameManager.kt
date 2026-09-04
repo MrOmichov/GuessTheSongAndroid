@@ -30,10 +30,8 @@ class GameManager @Inject constructor(
     }
 
     fun nextRound(): GameRound {
-        if (currentRoundNumber != 0) {
-            currentRoundNumber++
-        }
-        return rounds[currentRoundNumber]
+        currentRoundNumber++
+        return rounds[currentRoundNumber-1]
     }
 
     suspend fun prepareRounds(playlist: Playlist) {

@@ -1,5 +1,6 @@
 package org.mromichov.guessthesong.presentation.game
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -14,8 +15,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppContainer
@@ -83,7 +86,6 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
                        Text("В главное меню")
                     }
                 }
-
             }
         }
     }
@@ -98,20 +100,22 @@ private fun ListeningPreviewContent(viewModel: GameViewModel) {
     } else {
         0f
     }
-    val animatedProgress by animateFloatAsState(
-        targetValue = targetProgress,
-        animationSpec = tween(durationMillis = 60, easing = LinearEasing),
-        label = "smooth_progress"
-    )
+
+    val animatableProgress = remember { Animatable(targetProgress) }
+    LaunchedEffect(targetProgress) {
+        animatableProgress.animateTo(
+            targetValue = targetProgress,
+            animationSpec = tween(durationMillis = 60, easing = LinearEasing)
+        )
+    }
 
     Column {
         Text("${viewModel.currentRoundNumber}")
         AppContainer {
             LinearProgressIndicator(
-                progress = { animatedProgress },
+                progress = { animatableProgress.value },
             )
             Text(text = "$currentMs / $durationMs")
         }
     }
-
 }
