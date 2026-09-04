@@ -71,8 +71,13 @@ dependencies {
     implementation("androidx.compose.ui:ui-text-google-fonts")
     implementation("androidx.navigation:navigation-compose:2.9.8")
 
+    // Dagger
     implementation("com.google.dagger:dagger:2.60.1")
     ksp("com.google.dagger:dagger-compiler:2.60.1")
+
+    // Room
+    implementation("androidx.room3:room3-runtime:3.0.2")
+    ksp("androidx.room3:room3-compiler:3.0.2")
 
     implementation("ch.qos.logback:logback-classic:1.6.3")
 
