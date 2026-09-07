@@ -8,7 +8,7 @@ import org.mromichov.guessthesong.core.di.module.*
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [NetworkModule::class, SpotifyModule::class, RepositoryModule::class, AudioPlayerModule::class, ViewModelModule::class])
+@Component(modules = [NetworkModule::class, SpotifyModule::class, RepositoryModule::class, AudioPlayerModule::class, ViewModelModule::class, DatabaseModule::class])
 interface AppComponent {
     fun inject(mainActivity: MainActivity)
 
