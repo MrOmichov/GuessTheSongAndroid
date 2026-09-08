@@ -4,7 +4,7 @@ import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
-import org.mromichov.guessthesong.domain.model.TrackEntity
+import org.mromichov.guessthesong.core.database.entity.TrackEntity
 
 @Dao
 interface TrackDao {

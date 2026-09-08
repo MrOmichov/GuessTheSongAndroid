@@ -1,39 +1,47 @@
 package org.mromichov.guessthesong.data.repository
 
-import org.mromichov.guessthesong.core.database.TrackDatabase
+import org.mromichov.guessthesong.data.dao.TrackDao
 import org.mromichov.guessthesong.data.remote.itunes.ItunesApi
 import org.mromichov.guessthesong.data.remote.itunes.ItunesMapper
-import org.mromichov.guessthesong.domain.model.TrackEntity
+import org.mromichov.guessthesong.core.database.entity.TrackEntity
 import org.mromichov.guessthesong.domain.model.TrackPreview
 import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
 import javax.inject.Inject
 
 class TrackPreviewRepositoryImpl @Inject constructor(
-    private val trackDatabase: TrackDatabase,
+    private val trackDao: TrackDao,
     private val itunesApi: ItunesApi,
     private val mapper: ItunesMapper,
 ) : TrackPreviewRepository {
 
-    // TODO доделать
     override suspend fun getPreview(artist: String, title: String): Result<TrackPreview> = runCatching {
-        val trackEntity = tryFindInDB(artist, title)
-        if (trackEntity != null) {
+        val cachedTrack = tryFindInDB(artist, title)
+        if (cachedTrack != null) {
             return@runCatching TrackPreview(
-                trackEntity.id.toLong(),
-                trackEntity.title,
-                trackEntity.artist,
-                trackEntity.trackPreviewUrl,
-                artworkUrl = ""
+                null,
+                cachedTrack.title,
+                cachedTrack.artist,
+                cachedTrack.trackPreviewUrl,
+                artworkUrl = null,
             )
         }
         val query = "$artist $title".trim()
         val response = itunesApi.searchTrackPreview(query = query)
-        mapper.findBestMatch(response)
+        val preview = mapper.findBestMatch(response)
             ?: throw NoSuchElementException("No audio preview found in iTunes for query: $query")
+
+        runCatching {
+            trackDao.insertTracks(
+                TrackEntity(
+                    title = preview.trackName,
+                    artist = preview.artistName,
+                    trackPreviewUrl = preview.previewUrl
+                )
+            )
+        }
+
+        preview
     }
 
-    suspend fun tryFindInDB(artist: String, title: String): TrackEntity? {
-        val trackDao = trackDatabase.trackDao()
-        return trackDao.findByTitleAndArtist(artist, title)
-    }
+    suspend fun tryFindInDB(artist: String, title: String) = trackDao.findByTitleAndArtist(title, artist)
 }

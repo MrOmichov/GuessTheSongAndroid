@@ -16,7 +16,7 @@ class DatabaseModule {
             context.applicationContext,
             TrackDatabase::class.java,
             "tracks"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides

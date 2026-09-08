@@ -1,10 +1,10 @@
 package org.mromichov.guessthesong.data.remote.itunes
 
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mromichov.guessthesong.core.network.HttpClientCreator
+import org.mromichov.guessthesong.data.dao.FakeTrackDao
 import org.mromichov.guessthesong.data.repository.TrackPreviewRepositoryImpl
 
 class ItunesLiveIntegrationTest {
@@ -12,7 +12,8 @@ class ItunesLiveIntegrationTest {
     private val realClient = HttpClientCreator.create()
     private val api = ItunesApi(realClient)
     private val mapper = ItunesMapper()
-    private val repository = TrackPreviewRepositoryImpl(api, mapper)
+    private val fakeDao = FakeTrackDao()
+    private val repository = TrackPreviewRepositoryImpl(fakeDao, api, mapper)
 
     @Test
     fun fetchLive_itunesTrackPreview_returnsValidM4aUrl() = runTest {
