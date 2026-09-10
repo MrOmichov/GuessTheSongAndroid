@@ -79,6 +79,11 @@ dependencies {
     implementation("androidx.room3:room3-runtime:3.0.2")
     ksp("androidx.room3:room3-compiler:3.0.2")
 
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
+    implementation("androidx.datastore:datastore-preferences-core:1.2.1")
+
+
     implementation("ch.qos.logback:logback-classic:1.6.3")
 
     implementation("androidx.media3:media3-exoplayer:1.11.0")

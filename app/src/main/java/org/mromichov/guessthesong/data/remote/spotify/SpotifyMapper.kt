@@ -11,12 +11,7 @@ import javax.inject.Inject
 class SpotifyMapper @Inject constructor() {
 
     fun toDomain(dto: SpotifyWebTrackDto, coverUrl: String? = null): Track {
-        val trackId = dto.uri?.substringAfterLast("spotify:track:")
-            ?: dto.uid
-            ?: ""
-
         return Track(
-            id = trackId,
             title = dto.title,
             artist = dto.subtitle.orEmpty(),
             coverUrl = coverUrl,
@@ -47,7 +42,6 @@ class SpotifyMapper @Inject constructor() {
         if (previewUrl.isNullOrBlank()) return null
 
         return TrackPreview(
-            trackId = null,
             trackName = dto.title,
             artistName = dto.subtitle.orEmpty(),
             previewUrl = previewUrl,

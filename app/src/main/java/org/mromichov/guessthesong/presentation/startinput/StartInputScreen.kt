@@ -12,14 +12,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.mromichov.guessthesong.App
 import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
 import org.mromichov.guessthesong.presentation.startinput.component.InputUrlContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StartInputScreen(viewModel: StartInputViewModel, onStartGame: () -> Unit) {
+fun StartInputScreen(
+    viewModel: StartInputViewModel,
+    onStartGame: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
     var urlText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
