@@ -18,7 +18,6 @@ class TrackPreviewRepositoryImpl @Inject constructor(
         val cachedTrack = tryFindInDB(artist, title)
         if (cachedTrack != null) {
             return@runCatching TrackPreview(
-                null,
                 cachedTrack.title,
                 cachedTrack.artist,
                 cachedTrack.trackPreviewUrl,

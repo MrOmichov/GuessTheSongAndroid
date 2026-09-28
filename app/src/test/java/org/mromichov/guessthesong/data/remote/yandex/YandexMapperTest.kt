@@ -30,7 +30,6 @@ class YandexMapperTest {
 
         val domain = mapper.toDomain(dto)
 
-        assertEquals("101", domain.id)
         assertEquals("In the End", domain.title)
         assertEquals("Linkin Park, Jay-Z", domain.artist)
         assertEquals("https://avatars.yandex.net/get-music-content/101/400x400", domain.coverUrl)

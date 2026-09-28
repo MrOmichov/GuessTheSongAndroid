@@ -26,7 +26,7 @@ class SpotifyMapperTest {
     }
 
     @Test
-    fun toDomain_singleTrack_formatsIdArtistAndDurationCorrectly() {
+    fun toDomain_singleTrack_formatsArtistAndDurationCorrectly() {
         val trackDto = SpotifyWebTrackDto(
             uri = "spotify:track:2vzfV6LgfAWtv7JeSoEPFO",
             uid = "02f3ca667955def4",
@@ -41,7 +41,6 @@ class SpotifyMapperTest {
 
         val domainTrack = mapper.toDomain(dto = trackDto, coverUrl = "https://cover.url")
 
-        assertEquals("2vzfV6LgfAWtv7JeSoEPFO", domainTrack.id)
         assertEquals("The Silent Man", domainTrack.title)
         assertEquals("Dream Theater", domainTrack.artist)
         assertEquals("https://cover.url", domainTrack.coverUrl)
