@@ -26,15 +26,15 @@ class ItunesLiveIntegrationTest {
         val preview = result.getOrThrow()
 
         println("=== LIVE ITUNES PREVIEW ===")
-        println("Artist: ${preview.artistName}")
-        println("Track: ${preview.trackName}")
-        println("Preview URL: ${preview.previewUrl}")
-        println("Artwork URL: ${preview.artworkUrl}")
+        println("Artist: ${preview.artist}")
+        println("Track: ${preview.title}")
+        println("Preview URL: ${preview.trackPreviewUrl}")
+        println("Artwork URL: ${preview.coverUrl}")
 
-        assertTrue("Artist name should not be blank", preview.artistName.isNotBlank())
-        assertTrue("Track name should not be blank", preview.trackName.isNotBlank())
-        assertTrue("Preview URL should not be blank", preview.previewUrl.isNotBlank())
-        assertTrue("Preview URL should start with https://", preview.previewUrl.startsWith("https://"))
-        assertTrue("Preview URL should contain .m4a or .aac or .mp4", preview.previewUrl.contains(".m4a") || preview.previewUrl.contains(".aac") || preview.previewUrl.contains(".mp4"))
+        assertTrue("Artist name should not be blank", preview.artist.isNotBlank())
+        assertTrue("Track name should not be blank", preview.title.isNotBlank())
+        assertTrue("Preview URL should not be blank", preview.trackPreviewUrl.isNotBlank())
+        assertTrue("Preview URL should start with https://", preview.trackPreviewUrl.startsWith("https://"))
+        assertTrue("Preview URL should contain .m4a or .aac or .mp4", preview.trackPreviewUrl.contains(".m4a") || preview.trackPreviewUrl.contains(".aac") || preview.trackPreviewUrl.contains(".mp4"))
     }
 }

@@ -82,9 +82,9 @@ class TrackPreviewRepositoryImplTest {
         // 3. Assert (Проверка):
         assertTrue("Результат должен быть успешным", result.isSuccess)
         val preview = result.getOrNull()
-        assertEquals("In the End", preview?.trackName)
-        assertEquals("Linkin Park", preview?.artistName)
-        assertEquals("https://cached.storage/in_the_end.m4a", preview?.previewUrl)
+        assertEquals("In the End", preview?.title)
+        assertEquals("Linkin Park", preview?.artist)
+        assertEquals("https://cached.storage/in_the_end.m4a", preview?.trackPreviewUrl)
 
         // Главная проверка кэша: сеть НЕ вызывалась!
         assertTrue("Сетевой запрос не должен был выполняться при наличии трека в БД", mockEngine.requestHistory.isEmpty())
@@ -132,9 +132,9 @@ class TrackPreviewRepositoryImplTest {
         // 3. Assert (Проверка):
         assertTrue("Результат должен быть успешным", result.isSuccess)
         val preview = result.getOrNull()
-        assertEquals("Queen", preview?.artistName)
-        assertEquals("Bohemian Rhapsody", preview?.trackName)
-        assertEquals("https://audio-ssl.itunes.apple.com/bohemian.m4a", preview?.previewUrl)
+        assertEquals("Queen", preview?.artist)
+        assertEquals("Bohemian Rhapsody", preview?.title)
+        assertEquals("https://audio-ssl.itunes.apple.com/bohemian.m4a", preview?.trackPreviewUrl)
 
         // Проверяем, что трек реально сохранился в базу данных
         assertEquals("В базе должен появиться 1 сохраненный трек", 1, fakeDao.tracks.size)
@@ -219,6 +219,6 @@ class TrackPreviewRepositoryImplTest {
         val result = repo.getPreview("Linkin Park", "Numb")
 
         assertTrue("Метод должен вернуть успех, даже если кэширование в БД упало", result.isSuccess)
-        assertEquals("Numb", result.getOrNull()?.trackName)
+        assertEquals("Numb", result.getOrNull()?.title)
     }
 }

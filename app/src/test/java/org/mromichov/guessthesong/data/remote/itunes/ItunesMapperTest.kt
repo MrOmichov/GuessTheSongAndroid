@@ -33,10 +33,10 @@ class ItunesMapperTest {
         val result = mapper.findBestMatch(response)
 
         assertNotNull(result)
-        assertEquals("Linkin Park", result?.artistName)
-        assertEquals("Numb", result?.trackName)
-        assertEquals("https://audio-ssl.itunes.apple.com/numb.m4a", result?.previewUrl)
-        assertEquals("https://is1-ssl.mzstatic.com/cover.jpg", result?.artworkUrl)
+        assertEquals("Linkin Park", result?.artist)
+        assertEquals("Numb", result?.title)
+        assertEquals("https://audio-ssl.itunes.apple.com/numb.m4a", result?.trackPreviewUrl)
+        assertEquals("https://is1-ssl.mzstatic.com/cover.jpg", result?.coverUrl)
     }
 
     @Test

@@ -128,13 +128,13 @@ class SpotifyMapperTest {
             audioPreview = SpotifyAudioPreviewDto(url = "https://preview.mp3")
         )
 
-        val preview = mapper.toPreviewDomain(trackDto, artworkUrl = "https://cover.jpg")
+        val preview = mapper.toPreviewDomain(trackDto, coverUrl = "https://cover.jpg")
 
         assertNotNull(preview)
-        assertEquals("Lose Yourself", preview?.trackName)
-        assertEquals("Eminem", preview?.artistName)
-        assertEquals("https://preview.mp3", preview?.previewUrl)
-        assertEquals("https://cover.jpg", preview?.artworkUrl)
+        assertEquals("Lose Yourself", preview?.title)
+        assertEquals("Eminem", preview?.artist)
+        assertEquals("https://preview.mp3", preview?.trackPreviewUrl)
+        assertEquals("https://cover.jpg", preview?.coverUrl)
     }
 
     @Test
@@ -146,7 +146,7 @@ class SpotifyMapperTest {
             audioPreview = null
         )
 
-        val preview = mapper.toPreviewDomain(trackDto, artworkUrl = "https://cover.jpg")
+        val preview = mapper.toPreviewDomain(trackDto, coverUrl = "https://cover.jpg")
 
         assertNull(preview)
     }
