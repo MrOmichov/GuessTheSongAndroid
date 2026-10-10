@@ -11,15 +11,15 @@ class AppDataStore @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
     private companion object {
-        val KEY_MINIMAL_ROUNDS_NUMBER = intPreferencesKey("minimal_rounds_number")
+        val KEY_ROUNDS_NUMBER = intPreferencesKey("rounds_number")
         val KEY_SNIPPET_LENGTH = longPreferencesKey("snippet_length")
     }
 
-    val minimalRoundsNumber = dataStore.data
+    val roundsNumber = dataStore.data
         .catch { exception ->
             if (exception is IOException) emit(emptyPreferences()) else throw exception
         }
-        .map { preferences -> preferences[KEY_MINIMAL_ROUNDS_NUMBER] ?: 5 }
+        .map { preferences -> preferences[KEY_ROUNDS_NUMBER] ?: 5 }
 
     val snippetLength = dataStore.data
         .catch { exception ->
@@ -29,9 +29,9 @@ class AppDataStore @Inject constructor(
             preferences[KEY_SNIPPET_LENGTH] ?: 3000L
         }
 
-    suspend fun setMinimalRoundsNumber(minimalRoundsNumber: Int) {
+    suspend fun setRoundsNumber(minimalRoundsNumber: Int) {
         dataStore.edit { preferences ->
-            preferences[KEY_MINIMAL_ROUNDS_NUMBER] = minimalRoundsNumber
+            preferences[KEY_ROUNDS_NUMBER] = minimalRoundsNumber
         }
     }
 

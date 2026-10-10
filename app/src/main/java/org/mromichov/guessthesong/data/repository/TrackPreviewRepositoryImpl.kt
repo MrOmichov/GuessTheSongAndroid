@@ -21,7 +21,7 @@ class TrackPreviewRepositoryImpl @Inject constructor(
                 cachedTrack.title,
                 cachedTrack.artist,
                 cachedTrack.trackPreviewUrl,
-                artworkUrl = null,
+                coverUrl = null,
             )
         }
         val query = "$artist $title".trim()
@@ -32,9 +32,9 @@ class TrackPreviewRepositoryImpl @Inject constructor(
         runCatching {
             trackDao.insertTracks(
                 TrackEntity(
-                    title = preview.trackName,
-                    artist = preview.artistName,
-                    trackPreviewUrl = preview.previewUrl
+                    title = preview.title,
+                    artist = preview.artist,
+                    trackPreviewUrl = preview.trackPreviewUrl
                 )
             )
         }

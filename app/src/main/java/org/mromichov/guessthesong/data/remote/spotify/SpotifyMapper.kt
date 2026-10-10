@@ -37,15 +37,15 @@ class SpotifyMapper @Inject constructor() {
         )
     }
 
-    fun toPreviewDomain(dto: SpotifyWebTrackDto, artworkUrl: String? = null): TrackPreview? {
-        val previewUrl = dto.audioPreview?.url
-        if (previewUrl.isNullOrBlank()) return null
+    fun toPreviewDomain(dto: SpotifyWebTrackDto, coverUrl: String? = null): TrackPreview? {
+        val trackPreviewUrl = dto.audioPreview?.url
+        if (trackPreviewUrl.isNullOrBlank()) return null
 
         return TrackPreview(
-            trackName = dto.title,
-            artistName = dto.subtitle.orEmpty(),
-            previewUrl = previewUrl,
-            artworkUrl = artworkUrl
+            title = dto.title,
+            artist = dto.subtitle.orEmpty(),
+            trackPreviewUrl = trackPreviewUrl,
+            coverUrl = coverUrl
         )
     }
 }

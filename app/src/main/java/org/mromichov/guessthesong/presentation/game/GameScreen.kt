@@ -39,7 +39,7 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
                 }
                 is GameUiState.Guessing -> {
                     val state = uiState as GameUiState.Guessing
-                    Text("${state.currentRoundNumber}")
+                    Text("${state.currentRoundIndex}")
 
                     LazyColumn {
                         items(state.options.size) {
@@ -54,7 +54,7 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
                 is GameUiState.Answer -> {
                     val state = uiState as GameUiState.Answer
                     Column {
-                        Text("${state.currentRoundNumber}")
+                        Text("${state.currentRoundIndex}")
                         AppContainer {
                             Column {
                                 Text("Правильный ответ: ${state.answer.title} от ${state.answer.artist}")
@@ -86,6 +86,11 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
                        Text("В главное меню")
                     }
                 }
+
+                is GameUiState.Error -> {
+                    val state = uiState as GameUiState.Error
+                    Text(state.message)
+                }
             }
         }
     }
@@ -110,7 +115,7 @@ private fun ListeningPreviewContent(viewModel: GameViewModel) {
     }
 
     Column {
-        Text("${viewModel.currentRoundNumber}")
+        Text("${viewModel.currentRoundIndex}")
         AppContainer {
             LinearProgressIndicator(
                 progress = { animatableProgress.value },

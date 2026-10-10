@@ -2,6 +2,7 @@ package org.mromichov.guessthesong.data.player
 
 import android.content.Context
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.DatabaseProvider
@@ -36,11 +37,17 @@ class AudioPlayerImpl @Inject constructor(
 ) : AudioPlayer {
     private val _isPlaying = MutableStateFlow(false)
     override val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+
+    private val _snippetFinished= MutableStateFlow(true)
+    override val snippetFinished: StateFlow<Boolean> = _snippetFinished.asStateFlow()
     private val _currentMs = MutableStateFlow(0L)
     override val currentMs: StateFlow<Long> = _currentMs.asStateFlow()
 
     private val _durationMs = MutableStateFlow(0L)
     override val durationMs: StateFlow<Long> = _durationMs.asStateFlow()
+
+    private val _error = MutableStateFlow<PlaybackException?>(null)
+    override val error: StateFlow<PlaybackException?> = _error.asStateFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var progressJob: Job? = null
@@ -101,8 +108,6 @@ class AudioPlayerImpl @Inject constructor(
                             stopProgressPolling()
                             _currentMs.value = player.currentPosition
                         }
-
-
                     }
 
                     override fun onPlaybackStateChanged(state: Int) {
@@ -113,7 +118,12 @@ class AudioPlayerImpl @Inject constructor(
                         }
                         if (state == Player.STATE_ENDED) {
                             _currentMs.value = _durationMs.value
+                            _snippetFinished.value = true
                         }
+                    }
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        _error.value = error
                     }
                 })
             }
@@ -122,6 +132,7 @@ class AudioPlayerImpl @Inject constructor(
 
 
     override fun play(url: String, startMs: Long, endMs: Long) {
+        _error.value = null
         val mediaItem = MediaItem.Builder()
             .setUri(url)
             .setClippingConfiguration(
@@ -133,6 +144,7 @@ class AudioPlayerImpl @Inject constructor(
             .build()
         player.setMediaItem(mediaItem)
         player.prepare()
+        _snippetFinished.value = false
         player.play()
     }
 

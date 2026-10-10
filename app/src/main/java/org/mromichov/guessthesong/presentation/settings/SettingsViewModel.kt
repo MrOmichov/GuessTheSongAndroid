@@ -13,7 +13,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
     val uiState = combine(
-        settingsRepository.minimalRoundsNumber,
+        settingsRepository.roundsNumber,
         settingsRepository.snippetLength
     ) { roundsNumber, snippetLength ->
         SettingsUiState.Success(roundsNumber, (snippetLength / 1000).toInt())
@@ -25,7 +25,7 @@ class SettingsViewModel @Inject constructor(
 
     fun changeRoundsNumber(roundsNumber: Int) {
         viewModelScope.launch {
-            settingsRepository.setMinimalRoundsNumber(roundsNumber)
+            settingsRepository.setRoundsNumber(roundsNumber)
         }
     }
 

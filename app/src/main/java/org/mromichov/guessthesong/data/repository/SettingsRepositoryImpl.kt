@@ -8,11 +8,11 @@ import javax.inject.Inject
 class SettingsRepositoryImpl @Inject constructor(
     private val appDataStore: AppDataStore
 ) : SettingsRepository {
-    override val minimalRoundsNumber: Flow<Int> = appDataStore.minimalRoundsNumber
+    override val roundsNumber: Flow<Int> = appDataStore.roundsNumber
     override val snippetLength: Flow<Long> = appDataStore.snippetLength
 
-    override suspend fun setMinimalRoundsNumber(minimalRoundsNumber: Int) {
-        appDataStore.setMinimalRoundsNumber(minimalRoundsNumber)
+    override suspend fun setRoundsNumber(roundsNumber: Int) {
+        appDataStore.setRoundsNumber(roundsNumber)
     }
 
     override suspend fun setSnippetLength(ms: Long) {

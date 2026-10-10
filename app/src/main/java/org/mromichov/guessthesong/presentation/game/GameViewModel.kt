@@ -3,68 +3,75 @@ package org.mromichov.guessthesong.presentation.game
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.mromichov.guessthesong.domain.game.GameManager
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.player.AudioPlayer
-import org.mromichov.guessthesong.presentation.game.GameUiState
 import javax.inject.Inject
 import kotlin.random.Random
 
 class GameViewModel @Inject constructor(
     private val gameManager: GameManager,
-    val audioPlayer: AudioPlayer
+    val audioPlayer: AudioPlayer,
 ) : ViewModel() {
-    val currentRoundNumber: Int
-        get() = gameManager.currentRoundNumber
+    val currentRoundIndex: Int
+        get() = gameManager.currentRoundIndex
 
-    private var score = 0
-    private val _uiState: MutableStateFlow<GameUiState> = MutableStateFlow(GameUiState.ListeningPreview(currentRoundNumber))
+    val score: Int
+        get() = gameManager.score
+
+    private val _uiState: MutableStateFlow<GameUiState> =
+        MutableStateFlow(GameUiState.ListeningPreview(currentRoundIndex))
     val uiState = _uiState.asStateFlow()
+    private var isListeningStarted = false
 
     init {
-        gameManager.nextRound()
         startRoundOrGameOver()
     }
 
     fun startRoundOrGameOver() {
-        viewModelScope.launch {
-            if (currentRoundNumber == 5) {
-                _uiState.value = GameUiState.GameOver(score)
-                gameManager.reset()
-            } else {
-                if (currentRoundNumber != 1) gameManager.nextRound()
-                withContext(Dispatchers.Main) {
-                    val start = Random.nextLong(0L, 25000L)
+        if (!isListeningStarted) {
+            viewModelScope.launch {
+                if (currentRoundIndex == gameManager.config.roundsNumber) {
+                    _uiState.value = GameUiState.GameOver(score)
+                } else {
+                    val start = Random.nextLong(0L, 30000L - gameManager.config.snippetLength)
                     val trackPreview = gameManager.getCurrentTrackPreview()
-                    audioPlayer.play(trackPreview.previewUrl, start, start + 5000L)
+                    isListeningStarted = true
+                    audioPlayer.play(trackPreview.trackPreviewUrl, start, start + gameManager.config.snippetLength)
+                    _uiState.value = GameUiState.ListeningPreview(currentRoundIndex)
+                    val combinedAudioPlayerState =
+                        combine(audioPlayer.snippetFinished, audioPlayer.error) { snippetFinished, error ->
+                            snippetFinished to error
+                        }
+                    val result = combinedAudioPlayerState.first { (snippetFinished, error) ->
+                        error != null || snippetFinished
+                    }
+                    if (result.second != null) {
+                        _uiState.value = GameUiState.Error(result.second!!.message ?: "Unknown error")
+                        return@launch
+                    }
+                    isListeningStarted = false
+                    _uiState.value = GameUiState.Guessing(
+                        currentRoundIndex,
+                        gameManager.currentRoundOptions
+                    )
                 }
-                    audioPlayer.isPlaying.first { it }
-                    _uiState.value = GameUiState.ListeningPreview(currentRoundNumber)
-                    audioPlayer.isPlaying.first { !it }
-
-                val options = mutableListOf(gameManager.getCurrentRound().track)
-                options.addAll(gameManager.getCurrentRound().wrongOptions)
-                options.shuffle()
-
-
-                _uiState.value = GameUiState.Guessing(
-                    currentRoundNumber,
-                    options
-                )
             }
         }
     }
 
-    fun checkAnswer(track: Track) {
-        val rightAnswer = gameManager.rightAnswer()
-        val isGuessed = rightAnswer == track
-        if (isGuessed) score++
-        _uiState.value = GameUiState.Answer(currentRoundNumber, rightAnswer, isGuessed)
+    fun checkAnswer(userAnswer: Track) {
+        if (_uiState.value !is GameUiState.Guessing) return
+        val isGuessed = gameManager.checkAnswer(userAnswer)
+        _uiState.value = GameUiState.Answer(currentRoundIndex, gameManager.getCurrentRound().track, isGuessed)
+        gameManager.nextRound()
     }
-
 }
