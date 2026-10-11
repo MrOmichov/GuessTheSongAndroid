@@ -38,7 +38,7 @@ class SettingsViewModel @Inject constructor(
 
     fun changeSnippetLength(snippetLength: Int): String? {
         if (snippetLength !in 1..MAX_SNIPPET_LENGTH_IN_SECONDS) {
-            return "Длина отрывка должна быть от 1 до ${MAX_SNIPPET_LENGTH_IN_SECONDS - 1} с"
+            return "Длина отрывка должна быть от 1 до $MAX_SNIPPET_LENGTH_IN_SECONDS с"
         }
         viewModelScope.launch {
             settingsRepository.setSnippetLength((snippetLength * 1000).toLong())
