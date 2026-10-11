@@ -2,39 +2,40 @@ package org.mromichov.guessthesong.data.remote.itunes
 
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.mromichov.guessthesong.core.network.HttpClientCreator
-import org.mromichov.guessthesong.data.dao.FakeTrackDao
 import org.mromichov.guessthesong.data.repository.TrackPreviewRepositoryImpl
 
 class ItunesLiveIntegrationTest {
 
-    private val realClient = HttpClientCreator.create()
-    private val api = ItunesApi(realClient)
-    private val mapper = ItunesMapper()
-    private val fakeDao = FakeTrackDao()
-    private val repository = TrackPreviewRepositoryImpl(fakeDao, api, mapper)
-
     @Test
     fun fetchLive_itunesTrackPreview_returnsValidM4aUrl() = runTest {
-        val artist = "Linkin Park"
-        val title = "In the End"
+        assumeTrue(
+            "Set RUN_ITUNES_LIVE_TESTS=true to enable live iTunes integration tests",
+            System.getenv("RUN_ITUNES_LIVE_TESTS") == "true",
+        )
 
-        val result = repository.getPreview(artist = artist, title = title)
+        val client = HttpClientCreator.create()
+        try {
+            val api = ItunesApi(client)
+            val repository = TrackPreviewRepositoryImpl(api, ItunesMapper())
+            val result = repository.getPreview(artist = "Linkin Park", title = "In the End")
 
-        assertTrue("Expected successful preview lookup, got: ${result.exceptionOrNull()}", result.isSuccess)
-        val preview = result.getOrThrow()
-
-        println("=== LIVE ITUNES PREVIEW ===")
-        println("Artist: ${preview.artist}")
-        println("Track: ${preview.title}")
-        println("Preview URL: ${preview.trackPreviewUrl}")
-        println("Artwork URL: ${preview.coverUrl}")
-
-        assertTrue("Artist name should not be blank", preview.artist.isNotBlank())
-        assertTrue("Track name should not be blank", preview.title.isNotBlank())
-        assertTrue("Preview URL should not be blank", preview.trackPreviewUrl.isNotBlank())
-        assertTrue("Preview URL should start with https://", preview.trackPreviewUrl.startsWith("https://"))
-        assertTrue("Preview URL should contain .m4a or .aac or .mp4", preview.trackPreviewUrl.contains(".m4a") || preview.trackPreviewUrl.contains(".aac") || preview.trackPreviewUrl.contains(".mp4"))
+            assertTrue("Expected successful preview lookup, got: ${result.exceptionOrNull()}", result.isSuccess)
+            val preview = result.getOrThrow()
+            assertTrue("Artist name should not be blank", preview.artist.isNotBlank())
+            assertTrue("Track name should not be blank", preview.title.isNotBlank())
+            assertTrue("Preview URL should not be blank", preview.trackPreviewUrl.isNotBlank())
+            assertTrue("Preview URL should start with https://", preview.trackPreviewUrl.startsWith("https://"))
+            assertTrue(
+                "Preview URL should contain an audio extension",
+                listOf(".m4a", ".aac", ".mp4").any { extension ->
+                    preview.trackPreviewUrl.contains(extension)
+                },
+            )
+        } finally {
+            client.close()
+        }
     }
 }

@@ -36,11 +36,18 @@ class PlaylistRepositoryImpl @Inject constructor(
                 val response = yandexApi.getUserPlaylist(owner = target.owner, kind = target.kind)
                 yandexMapper.toDomain(playlistId = "${target.owner}:${target.kind}", dto = response)
             }
+
             is YandexPlaylistTarget.UuidPlaylist -> {
                 val response = yandexApi.getUuidPlaylist(uuid = target.uuid)
                 yandexMapper.toDomain(playlistId = target.uuid, dto = response)
             }
+
             null -> throw IllegalArgumentException("Unsupported or invalid playlist URL: $url")
         }
     }
+
+    override suspend fun getSavedPlaylists(title: String): Result<List<Playlist>> = runCatching {
+        return@runCatching emptyList<Playlist>()
+    }
+
 }
