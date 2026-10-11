@@ -7,8 +7,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
+import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -18,11 +21,24 @@ fun SettingsScreen(
     back: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {}
+                title = {},
+                navigationIcon = {
+                    IconButton(onClick = back) {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_back),
+                            contentDescription = "Back"
+                        )
+                    }
+                },
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         }
     ) { paddingValues ->
         Column(
@@ -33,8 +49,8 @@ fun SettingsScreen(
                 SettingsUiState.Loading -> CircularProgressIndicator()
                 is SettingsUiState.Success -> {
                     val state = uiState as SettingsUiState.Success
-                    var roundsNumber by remember { mutableIntStateOf(state.roundsNumber) }
-                    var snippetLength by remember { mutableIntStateOf(state.snippetLength) }
+                    val roundsNumber = state.roundsNumber
+                    val snippetLength = state.snippetLength
                     AppContainer {
                         Row {
                             Text(
@@ -43,9 +59,14 @@ fun SettingsScreen(
                             OutlinedTextField(
                                 value = roundsNumber.toString(),
                                 onValueChange = { newValue ->
-                                    if (!newValue.isEmpty() || newValue.all { it.isDigit() }) {
-                                        roundsNumber = newValue.toInt()
-                                        viewModel.changeRoundsNumber(roundsNumber)
+                                    val fieldInput = newValue.toIntOrNull()
+                                    val error = if (fieldInput == null) {
+                                        "Введите целое число"
+                                    } else {
+                                        viewModel.changeRoundsNumber(fieldInput)
+                                    }
+                                    if (error != null) {
+                                        scope.launch { snackbarHostState.showSnackbar(error) }
                                     }
                                 },
                                 keyboardOptions = KeyboardOptions(
@@ -57,13 +78,19 @@ fun SettingsScreen(
                         AppContainer {
                             Row {
                                 Text(
-                                    text = "Длина отрывка"
+                                    text = "Длина отрывка, с"
                                 )
                                 OutlinedTextField(
                                     value = snippetLength.toString(),
                                     onValueChange = { newValue ->
-                                        if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
-                                            snippetLength = newValue.toInt()
+                                        val fieldInput = newValue.toIntOrNull()
+                                        val error = if (fieldInput == null) {
+                                            "Введите целое число"
+                                        } else {
+                                            viewModel.changeSnippetLength(fieldInput)
+                                        }
+                                        if (error != null) {
+                                            scope.launch { snackbarHostState.showSnackbar(error) }
                                         }
                                     },
                                     keyboardOptions = KeyboardOptions(

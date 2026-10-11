@@ -2,15 +2,9 @@ package org.mromichov.guessthesong.presentation.game
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import org.mromichov.guessthesong.core.AppConsts
 import org.mromichov.guessthesong.domain.game.GameManager
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.player.AudioPlayer
@@ -19,7 +13,7 @@ import kotlin.random.Random
 
 class GameViewModel @Inject constructor(
     private val gameManager: GameManager,
-    val audioPlayer: AudioPlayer,
+    private val audioPlayer: AudioPlayer,
 ) : ViewModel() {
     val currentRoundIndex: Int
         get() = gameManager.currentRoundIndex
@@ -31,6 +25,12 @@ class GameViewModel @Inject constructor(
         MutableStateFlow(GameUiState.ListeningPreview(currentRoundIndex))
     val uiState = _uiState.asStateFlow()
     private var isListeningStarted = false
+    val currentSeconds: StateFlow<Int> = audioPlayer.currentMs.map {
+        (it / 1_000).toInt()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(2_000), 0)
+    val durationSeconds: StateFlow<Int> = audioPlayer.durationMs.map {
+        (it / 1_000).toInt()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(2_000), 0)
 
     init {
         startRoundOrGameOver()
@@ -42,7 +42,11 @@ class GameViewModel @Inject constructor(
                 if (currentRoundIndex == gameManager.config.roundsNumber) {
                     _uiState.value = GameUiState.GameOver(score)
                 } else {
-                    val start = Random.nextLong(0L, 30000L - gameManager.config.snippetLength)
+                    val start =
+                        if (gameManager.config.snippetLength == AppConsts.MAX_SNIPPET_LENGTH_IN_SECONDS * 1_000L) 0L else Random.nextLong(
+                            0L,
+                            AppConsts.MAX_SNIPPET_LENGTH_IN_SECONDS * 1_000L - gameManager.config.snippetLength
+                        )
                     val trackPreview = gameManager.getCurrentTrackPreview()
                     isListeningStarted = true
                     audioPlayer.play(trackPreview.trackPreviewUrl, start, start + gameManager.config.snippetLength)
@@ -51,11 +55,12 @@ class GameViewModel @Inject constructor(
                         combine(audioPlayer.snippetFinished, audioPlayer.error) { snippetFinished, error ->
                             snippetFinished to error
                         }
-                    val result = combinedAudioPlayerState.first { (snippetFinished, error) ->
+                    val finishedOrErrorPair = combinedAudioPlayerState.first { (snippetFinished, error) ->
                         error != null || snippetFinished
                     }
-                    if (result.second != null) {
-                        _uiState.value = GameUiState.Error(result.second!!.message ?: "Unknown error")
+                    if (finishedOrErrorPair.second != null) {
+                        _uiState.value = GameUiState.Error(finishedOrErrorPair.second!!.message ?: "Unknown error")
+                        isListeningStarted = false
                         return@launch
                     }
                     isListeningStarted = false

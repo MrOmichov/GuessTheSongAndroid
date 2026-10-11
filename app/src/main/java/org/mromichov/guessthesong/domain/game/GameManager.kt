@@ -1,5 +1,8 @@
 package org.mromichov.guessthesong.domain.game
 
+import org.mromichov.guessthesong.core.AppConsts.Companion.MAX_SNIPPET_LENGTH_IN_SECONDS
+import org.mromichov.guessthesong.core.AppConsts.Companion.MIN_SNIPPET_LENGTH_IN_SECONDS
+import org.mromichov.guessthesong.core.AppConsts.Companion.WRONG_OPTIONS_NUMBER
 import org.mromichov.guessthesong.core.exception.TrackCountException
 import org.mromichov.guessthesong.core.exception.TrackPreviewException
 import org.mromichov.guessthesong.domain.model.GameRound
@@ -14,11 +17,6 @@ import javax.inject.Singleton
 class GameManager @Inject constructor(
     private val trackPreviewRepository: TrackPreviewRepository,
 ) {
-    companion object {
-        private const val WRONG_OPTIONS_NUMBER: Int = 3
-        private const val MAX_SNIPPET_LENGTH_MS: Long = 30_000L
-    }
-
     var currentRoundIndex: Int = 0
         private set
 
@@ -56,19 +54,18 @@ class GameManager @Inject constructor(
         currentRoundIndex++
     }
 
-
     suspend fun prepareRounds(playlist: Playlist, config: GameConfig) {
         validateConfig(config)
         this.config = config
-        validatePlaylist(playlist)
+        val uniqueTracks = validatePlaylistAndGetUniqueTracks(playlist)
         val alreadySelected = mutableSetOf<Track>()
 
         while (rounds.size != this.config.roundsNumber) {
-            val track = playlist.tracks.random()
-            if (alreadySelected.contains(track)) continue
+            val answerTrack = uniqueTracks.random()
+            if (alreadySelected.contains(answerTrack)) continue
 
-            alreadySelected.add(track)
-            val round = prepareOneRound(track, playlist.tracks)
+            alreadySelected.add(answerTrack)
+            val round = prepareOneRound(answerTrack, uniqueTracks)
             rounds.add(round)
         }
     }
@@ -95,18 +92,25 @@ class GameManager @Inject constructor(
         score = 0
         rounds.removeAll { true }
     }
+
     private fun validateConfig(config: GameConfig) {
         require(config.roundsNumber > 0) {
             "Number of rounds must be positive"
         }
-        require(config.snippetLength in 1L until MAX_SNIPPET_LENGTH_MS) {
-            "Snippet length must be between 1 and ${MAX_SNIPPET_LENGTH_MS - 1} ms"
+        val minSnippetLengthInMs = MIN_SNIPPET_LENGTH_IN_SECONDS * 1_000L
+        val maxSnippetLengthInMs = MAX_SNIPPET_LENGTH_IN_SECONDS * 1_000L
+        require(config.snippetLength in minSnippetLengthInMs..maxSnippetLengthInMs) {
+            "Snippet length must be between $minSnippetLengthInMs and $maxSnippetLengthInMs s"
         }
     }
 
-    private fun validatePlaylist(playlist: Playlist) {
-        if (playlist.tracks.size < config.roundsNumber) {
+    private fun validatePlaylistAndGetUniqueTracks(playlist: Playlist): List<Track> {
+        val uniqueTracks = playlist.tracks.distinctBy { track ->
+            track.title to track.artist
+        }
+        if (uniqueTracks.size < maxOf(config.roundsNumber, WRONG_OPTIONS_NUMBER + 1)) {
             throw TrackCountException()
         }
+        return uniqueTracks
     }
 }

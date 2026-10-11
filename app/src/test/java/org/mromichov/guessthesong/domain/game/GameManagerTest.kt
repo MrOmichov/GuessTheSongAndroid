@@ -14,12 +14,12 @@ import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
 
 class GameManagerTest {
     @Test
-    fun `preparation accepts positive rounds and snippet length inside supported range`() = runTest {
+    fun `preparation accepts inclusive snippet length boundaries`() = runTest {
         val manager = GameManager(FakePreviewRepository())
 
-        manager.prepareRounds(playlist(tracks(4)), GameConfig(roundsNumber = 1, snippetLength = 1))
+        manager.prepareRounds(playlist(tracks(4)), GameConfig(roundsNumber = 1, snippetLength = 1_000))
         manager.reset()
-        manager.prepareRounds(playlist(tracks(40)), GameConfig(roundsNumber = 10, snippetLength = 29_999))
+        manager.prepareRounds(playlist(tracks(40)), GameConfig(roundsNumber = 10, snippetLength = 30_000))
     }
 
     @Test
@@ -28,15 +28,15 @@ class GameManagerTest {
         val playlist = playlist(tracks(4))
 
         assertSuspendThrows(IllegalArgumentException::class.java) {
-            manager.prepareRounds(playlist, GameConfig(0, 1))
+            manager.prepareRounds(playlist, GameConfig(0, 10_000))
         }
         assertSuspendThrows(IllegalArgumentException::class.java) {
-            manager.prepareRounds(playlist, GameConfig(-1, 1))
+            manager.prepareRounds(playlist, GameConfig(-1, 10_000))
         }
     }
 
     @Test
-    fun `preparation rejects snippet length outside supported range`() = runTest {
+    fun `preparation rejects snippet length below or above inclusive range`() = runTest {
         val manager = GameManager(FakePreviewRepository())
         val playlist = playlist(tracks(4))
 
@@ -44,7 +44,10 @@ class GameManagerTest {
             manager.prepareRounds(playlist, GameConfig(1, 0))
         }
         assertSuspendThrows(IllegalArgumentException::class.java) {
-            manager.prepareRounds(playlist, GameConfig(1, 30_000))
+            manager.prepareRounds(playlist, GameConfig(1, 999))
+        }
+        assertSuspendThrows(IllegalArgumentException::class.java) {
+            manager.prepareRounds(playlist, GameConfig(1, 30_001))
         }
         assertSuspendThrows(IllegalArgumentException::class.java) {
             manager.prepareRounds(playlist, GameConfig(1, -1))
@@ -66,6 +69,21 @@ class GameManagerTest {
     }
 
     @Test
+    fun `prepared round choices are distinct by title and artist`() = runTest {
+        val sourceTracks = tracks(4).flatMap { track ->
+            listOf(track, track.copy(coverUrl = "cover://alternate", durationMs = 200_000))
+        }
+        val manager = GameManager(FakePreviewRepository())
+        manager.prepareRounds(playlist(sourceTracks), GameConfig(1, 10_000))
+
+        val answer = manager.getCurrentRound().track
+        val choiceIdentities = manager.currentRoundOptions.map(::identity).toSet()
+
+        assertEquals(4, choiceIdentities.size)
+        assertTrue(identity(answer) in choiceIdentities)
+    }
+
+    @Test
     fun `prepared rounds use a unique correct track for every question`() = runTest {
         val sourceTracks = tracks(13)
         val manager = GameManager(FakePreviewRepository())
@@ -78,7 +96,30 @@ class GameManagerTest {
         }
 
         assertEquals(10, answers.size)
-        assertEquals("Every round must have a distinct correct track", answers.size, answers.distinct().size)
+        assertEquals("Every round must have a distinct title and artist", answers.size, answers.map(::identity).distinct().size)
+    }
+
+    @Test
+    fun `duplicate rich playlist prepares distinct questions and four distinct choices per round`() = runTest {
+        val uniqueTracks = tracks(4)
+        val sourceTracks = uniqueTracks.flatMap { track ->
+            listOf(track, track.copy(coverUrl = "cover://alternate", durationMs = 200_000))
+        }
+        val manager = GameManager(FakePreviewRepository())
+        manager.prepareRounds(playlist(sourceTracks), GameConfig(4, 10_000))
+
+        val answers = mutableListOf<Track>()
+        repeat(4) { roundIndex ->
+            val round = manager.getCurrentRound()
+            answers += round.track
+
+            val choiceIdentities = manager.currentRoundOptions.map(::identity).toSet()
+            assertEquals("Each round must expose four distinct title/artist pairs", 4, choiceIdentities.size)
+            assertTrue(identity(round.track) in choiceIdentities)
+            if (roundIndex < 3) manager.nextRound()
+        }
+
+        assertEquals(4, answers.map(::identity).distinct().size)
     }
 
     @Test
@@ -96,12 +137,31 @@ class GameManagerTest {
     }
 
     @Test
-    fun `preparation fails with track count error when fewer distinct questions than rounds`() = runTest {
-        val manager = GameManager(FakePreviewRepository())
+    fun `four distinct tracks fail when five questions are requested`() = runTest {
+        assertInsufficientTracksFailBeforePreview(tracks(4), rounds = 5)
+    }
 
-        assertSuspendThrows(TrackCountException::class.java) {
-            manager.prepareRounds(playlist(tracks(4)), GameConfig(5, 10_000))
-        }
+    @Test
+    fun `four copies of one track fail before preview lookup`() = runTest {
+        assertInsufficientTracksFailBeforePreview(List(4) { tracks(1).single() }, rounds = 4)
+    }
+
+    @Test
+    fun `three distinct tracks fail even for one round because four choices are required`() = runTest {
+        assertInsufficientTracksFailBeforePreview(tracks(3), rounds = 1)
+    }
+
+    @Test
+    fun `raw playlist size does not satisfy distinct question requirement`() = runTest {
+        val sourceTracks = listOf(tracks(3)[0], tracks(3)[0], tracks(3)[1], tracks(3)[2])
+        assertInsufficientTracksFailBeforePreview(sourceTracks, rounds = 4)
+    }
+
+    @Test
+    fun `metadata variants of same title and artist count as one track`() = runTest {
+        val sameIdentity = tracks(1).single()
+        val variants = List(4) { index -> sameIdentity.copy(coverUrl = "cover://$index", durationMs = 180_000L + index) }
+        assertInsufficientTracksFailBeforePreview(variants, rounds = 1)
     }
 
     @Test
@@ -141,9 +201,31 @@ class GameManagerTest {
 
     private fun playlist(tracks: List<Track>) = Playlist("playlist", "Playlist", tracks)
 
+    private fun identity(track: Track) = track.title to track.artist
+
+    private suspend fun assertInsufficientTracksFailBeforePreview(tracks: List<Track>, rounds: Int) {
+        val previewRepository = FailFastPreviewRepository()
+        val manager = GameManager(previewRepository)
+
+        assertSuspendThrows(TrackCountException::class.java) {
+            manager.prepareRounds(playlist(tracks), GameConfig(rounds, 10_000))
+        }
+        assertEquals("Invalid playlists must be rejected before preview lookup", 0, previewRepository.lookupCount)
+    }
+
     private class FakePreviewRepository(private val fail: Boolean = false) : TrackPreviewRepository {
         override suspend fun getPreview(artist: String, title: String): Result<TrackPreview> =
             if (fail) Result.failure(IllegalStateException("preview unavailable"))
             else Result.success(TrackPreview(title, artist, "preview://$artist/$title", null))
+    }
+
+    private class FailFastPreviewRepository : TrackPreviewRepository {
+        var lookupCount = 0
+            private set
+
+        override suspend fun getPreview(artist: String, title: String): Result<TrackPreview> {
+            lookupCount++
+            throw AssertionError("Preview lookup must not happen for an invalid playlist")
+        }
     }
 }
