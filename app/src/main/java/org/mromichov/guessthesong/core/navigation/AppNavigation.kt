@@ -33,14 +33,14 @@ fun AppNavigation() {
             val startInputViewModel: StartInputViewModel = viewModel(factory = LocalViewModelProvider.current)
             StartInputScreen(
                 viewModel = startInputViewModel,
-                onStartGame = { navController.navigate(GameRoute) },
+                startGame = { navController.navigate(GameRoute) },
                 onOpenSettings = { navController.navigate(SettingsRoute) }
             )
         }
 
         composable<GameRoute> {
             val gameViewModel: GameViewModel = viewModel(factory = LocalViewModelProvider.current)
-            GameScreen(viewModel = gameViewModel, onEnd = { navController.navigate(StartInputRoute) })
+            GameScreen(viewModel = gameViewModel, onEnd = { navController.popBackStack() })
         }
 
         composable<SettingsRoute> {

@@ -69,13 +69,13 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
                                 )
                             }
                         }
+                        AppButton(
+                            icon = painterResource(R.drawable.chevron_right),
+                            onClick = { viewModel.startRoundOrGameOver() },
+                            text = "Дальше"
+                        )
                     }
 
-                    AppButton(
-                        icon = painterResource(R.drawable.chevron_right),
-                        onClick = { viewModel.startRoundOrGameOver() },
-                        text = "Дальше"
-                    )
                 }
 
                 is GameUiState.GameOver -> {
@@ -168,8 +168,10 @@ fun BiDirectionalProgressBar(
             cap = StrokeCap.Round
         )
 
-        val startX = (width / 2) * coercedProgress
-        val endX = startX - width
+        val centerX = width / 2
+        val halfFilledWidth = centerX * coercedProgress
+        val startX = centerX - halfFilledWidth
+        val endX = centerX + halfFilledWidth
 
         if (coercedProgress > 0f) {
             drawLine(

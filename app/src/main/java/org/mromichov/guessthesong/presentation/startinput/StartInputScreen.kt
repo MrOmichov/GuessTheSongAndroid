@@ -21,12 +21,19 @@ import org.mromichov.guessthesong.presentation.startinput.component.InputUrlCont
 @Composable
 fun StartInputScreen(
     viewModel: StartInputViewModel,
-    onStartGame: () -> Unit,
+    startGame: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     var urlText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState) {
+        if (uiState is StartInputUiState.ReadyToPlay) {
+            viewModel.onGameStarted()
+            startGame()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -84,7 +91,7 @@ fun StartInputScreen(
                         else -> "Загрузить плейлист"
                     },
                     onClick = { viewModel.loadPlaylist(url = urlText) },
-                    enabled = urlText.isNotBlank() && uiState !is StartInputUiState.Loading
+                    enabled = viewModel.canLoadPlaylist(url = urlText)
                 )
 
                 Spacer(Modifier.padding(16.dp))
@@ -96,20 +103,44 @@ fun StartInputScreen(
                             modifier = Modifier.width(300.dp),
                         )
                     }
-                } else if (uiState is StartInputUiState.Success) {
-                    AppButton(
-                        icon = painterResource(R.drawable.play),
-                        text = "Начать игру",
-                        onClick = onStartGame,
-                    )
+                } else if (uiState is StartInputUiState.Loaded || uiState is StartInputUiState.Preparing || uiState is StartInputUiState.ReadyToPlay) {
+                    when (uiState) {
+                        is StartInputUiState.Loaded -> ContentWithLoadedPlaylist(
+                            viewModel,
+                            (uiState as StartInputUiState.Loaded).playlist.title,
+                            true
+                        )
 
-                    Text(
-                        text = (uiState as StartInputUiState.Success).playlist.title,
-                        modifier = Modifier.width(300.dp),
-                        textAlign = TextAlign.Center
-                    )
+                        is StartInputUiState.Preparing -> ContentWithLoadedPlaylist(
+                            viewModel,
+                            (uiState as StartInputUiState.Preparing).playlist.title,
+                            false
+                        )
+
+                        else -> {}
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+fun ContentWithLoadedPlaylist(
+    viewModel: StartInputViewModel,
+    playlistTitle: String,
+    startEnabled: Boolean
+) {
+    AppButton(
+        icon = painterResource(R.drawable.play),
+        text = "Начать игру",
+        onClick = { viewModel.prepareGame() },
+        enabled = startEnabled
+    )
+
+    Text(
+        text = playlistTitle,
+        modifier = Modifier.width(300.dp),
+        textAlign = TextAlign.Center
+    )
 }
