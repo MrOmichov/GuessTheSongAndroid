@@ -2,6 +2,7 @@ package org.mromichov.guessthesong.data.player
 
 import android.content.Context
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.DatabaseProvider
@@ -12,6 +13,7 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.preload.DefaultPreloadManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,11 +37,17 @@ class AudioPlayerImpl @Inject constructor(
 ) : AudioPlayer {
     private val _isPlaying = MutableStateFlow(false)
     override val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+
+    private val _snippetFinished= MutableStateFlow(true)
+    override val snippetFinished: StateFlow<Boolean> = _snippetFinished.asStateFlow()
     private val _currentMs = MutableStateFlow(0L)
     override val currentMs: StateFlow<Long> = _currentMs.asStateFlow()
 
     private val _durationMs = MutableStateFlow(0L)
     override val durationMs: StateFlow<Long> = _durationMs.asStateFlow()
+
+    private val _error = MutableStateFlow<PlaybackException?>(null)
+    override val error: StateFlow<PlaybackException?> = _error.asStateFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var progressJob: Job? = null
@@ -52,6 +60,7 @@ class AudioPlayerImpl @Inject constructor(
             }
         }
     }
+
     private fun stopProgressPolling() {
         progressJob?.cancel()
         progressJob = null
@@ -75,13 +84,19 @@ class AudioPlayerImpl @Inject constructor(
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
     }
 
+    val targetPreloadStatusControl = AppTargetPreloadStatusControl()
+    val preloadManagerBuilder = DefaultPreloadManager.Builder(context, targetPreloadStatusControl)
+    val preloadManager = preloadManagerBuilder.build()
+
     private val player: ExoPlayer by lazy {
         val mediaSourceFactory = DefaultMediaSourceFactory(context)
             .setDataSourceFactory(cacheDataSourceFactory)
 
-        ExoPlayer.Builder(context)
-            .setMediaSourceFactory(mediaSourceFactory)
-            .build()
+        val exoPlayerBuilder = ExoPlayer.Builder(context).setMediaSourceFactory(mediaSourceFactory)
+//        ExoPlayer.Builder(context)
+//            .setMediaSourceFactory(mediaSourceFactory)
+//            .build()
+        preloadManagerBuilder.buildExoPlayer(exoPlayerBuilder)
             .apply {
                 volume = 1.0f
                 addListener(object : Player.Listener {
@@ -93,8 +108,6 @@ class AudioPlayerImpl @Inject constructor(
                             stopProgressPolling()
                             _currentMs.value = player.currentPosition
                         }
-
-
                     }
 
                     override fun onPlaybackStateChanged(state: Int) {
@@ -105,14 +118,21 @@ class AudioPlayerImpl @Inject constructor(
                         }
                         if (state == Player.STATE_ENDED) {
                             _currentMs.value = _durationMs.value
+                            _snippetFinished.value = true
                         }
+                    }
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        _error.value = error
                     }
                 })
             }
+
     }
 
 
     override fun play(url: String, startMs: Long, endMs: Long) {
+        _error.value = null
         val mediaItem = MediaItem.Builder()
             .setUri(url)
             .setClippingConfiguration(
@@ -122,8 +142,9 @@ class AudioPlayerImpl @Inject constructor(
                     .build()
             )
             .build()
-        player.setMediaItem(mediaItem, startMs)
+        player.setMediaItem(mediaItem)
         player.prepare()
+        _snippetFinished.value = false
         player.play()
     }
 
@@ -139,4 +160,6 @@ class AudioPlayerImpl @Inject constructor(
         scope.cancel()
         player.release()
     }
+
+
 }

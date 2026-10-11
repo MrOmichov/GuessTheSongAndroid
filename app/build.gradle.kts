@@ -7,13 +7,6 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) {
-        load(file.inputStream())
-    }
-}
-
 android {
     namespace = "org.mromichov.guessthesong"
     compileSdk = 37
@@ -28,12 +21,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["redirectSchemeName"] = "guessthesong"
         manifestPlaceholders["redirectHostName"] = "callback"
-
-        val clientId = localProperties.getProperty("SPOTIFY_CLIENT_ID") ?: System.getenv("SPOTIFY_CLIENT_ID") ?: ""
-        val clientSecret = localProperties.getProperty("SPOTIFY_CLIENT_SECRET") ?: System.getenv("SPOTIFY_CLIENT_SECRET") ?: ""
-
-        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$clientId\"")
-        buildConfigField("String", "SPOTIFY_CLIENT_SECRET", "\"$clientSecret\"")
     }
 
     buildTypes {
@@ -71,8 +58,18 @@ dependencies {
     implementation("androidx.compose.ui:ui-text-google-fonts")
     implementation("androidx.navigation:navigation-compose:2.9.8")
 
+    // Dagger
     implementation("com.google.dagger:dagger:2.60.1")
     ksp("com.google.dagger:dagger-compiler:2.60.1")
+
+    // Room
+    implementation("androidx.room3:room3-runtime:3.0.2")
+    ksp("androidx.room3:room3-compiler:3.0.2")
+
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
+    implementation("androidx.datastore:datastore-preferences-core:1.2.1")
+
 
     implementation("ch.qos.logback:logback-classic:1.6.3")
 
@@ -88,11 +85,11 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:3.5.2")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.5.2")
 
-    implementation("com.adamratzman:spotify-api-kotlin-core:4.1.3")
-
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.ktor:ktor-client-mock:3.5.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+
+    androidTestImplementation(platform("androidx.compose:compose-bom:2026.08.00"))
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 

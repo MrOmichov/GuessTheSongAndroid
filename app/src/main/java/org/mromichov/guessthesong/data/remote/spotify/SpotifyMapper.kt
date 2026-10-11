@@ -1,8 +1,8 @@
 package org.mromichov.guessthesong.data.remote.spotify
 
 import org.mromichov.guessthesong.core.exception.TrackCountException
-import com.adamratzman.spotify.models.Playlist as SpotifyPlaylistDto
-import com.adamratzman.spotify.models.Track as SpotifyTrackDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebEmbedDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebTrackDto
 import org.mromichov.guessthesong.domain.model.Playlist
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.model.TrackPreview
@@ -10,47 +10,42 @@ import javax.inject.Inject
 
 class SpotifyMapper @Inject constructor() {
 
-    fun toDomain(dto: SpotifyTrackDto): Track {
-        val artistsFormatted = dto.artists.joinToString(", ") { it.name.orEmpty().trim() }.trim()
-        val coverUrl = dto.album.images?.firstOrNull()?.url
-
+    fun toDomain(dto: SpotifyWebTrackDto, coverUrl: String? = null): Track {
         return Track(
-            id = dto.id,
-            title = dto.name,
-            artist = artistsFormatted,
+            title = dto.title,
+            artist = dto.subtitle.orEmpty(),
             coverUrl = coverUrl,
-            durationMs = dto.durationMs.toLong()
+            durationMs = dto.duration
         )
     }
 
-    fun toDomain(dto: SpotifyPlaylistDto): Playlist {
-        val domainTracks = dto.tracks.items.mapNotNull { playlistTrack ->
-            val track = playlistTrack.track as? SpotifyTrackDto
-            track?.let { toDomain(it) }
-        }
+    fun toDomain(playlistId: String, dto: SpotifyWebEmbedDto): Playlist {
+        val entity = dto.props?.pageProps?.state?.data?.entity
+            ?: throw NoSuchElementException("Invalid Spotify embed response: missing entity")
 
-        if (domainTracks.size < 20) throw TrackCountException()
+        val coverUrl = entity.coverArt?.sources?.firstOrNull()?.url
+        val title = entity.name ?: entity.title ?: "Spotify Playlist"
+
+        val tracks = entity.trackList.map { toDomain(dto = it, coverUrl = coverUrl) }
+
+        if (tracks.size < 20) throw TrackCountException()
 
         return Playlist(
-            id = dto.id,
-            title = dto.name,
-            tracks = domainTracks
+            id = playlistId,
+            title = title,
+            tracks = tracks
         )
     }
 
-    fun toPreviewDomain(dto: SpotifyTrackDto): TrackPreview? {
-        val previewUrl = dto.previewUrl
-        if (previewUrl.isNullOrBlank()) return null
-
-        val artistsFormatted = dto.artists.joinToString(", ") { it.name.orEmpty().trim() }.trim()
-        val artworkUrl = dto.album.images?.firstOrNull()?.url
+    fun toPreviewDomain(dto: SpotifyWebTrackDto, coverUrl: String? = null): TrackPreview? {
+        val trackPreviewUrl = dto.audioPreview?.url
+        if (trackPreviewUrl.isNullOrBlank()) return null
 
         return TrackPreview(
-            trackId = null,
-            trackName = dto.name,
-            artistName = artistsFormatted,
-            previewUrl = previewUrl,
-            artworkUrl = artworkUrl
+            title = dto.title,
+            artist = dto.subtitle.orEmpty(),
+            trackPreviewUrl = trackPreviewUrl,
+            coverUrl = coverUrl
         )
     }
 }

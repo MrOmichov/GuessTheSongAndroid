@@ -16,7 +16,6 @@ class YandexMapper @Inject constructor() {
         val coverUrl = rawCover?.let { formatCoverUrl(it) }
 
         return Track(
-            id = dto.id.orEmpty(),
             title = dto.title,
             artist = artistsFormatted,
             coverUrl = coverUrl,

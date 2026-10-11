@@ -10,11 +10,14 @@ import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import org.mromichov.guessthesong.data.dao.FakePlaylistTracksDao
+import org.mromichov.guessthesong.core.database.PlaylistWithTracks
+import org.mromichov.guessthesong.core.database.entity.PlaylistEntity
+import org.mromichov.guessthesong.core.database.entity.TrackEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mromichov.guessthesong.data.remote.spotify.SpotifyApi
-import org.mromichov.guessthesong.data.remote.spotify.SpotifyConfig
 import org.mromichov.guessthesong.data.remote.spotify.SpotifyMapper
 import org.mromichov.guessthesong.data.remote.spotify.SpotifyPlaylistUrlParser
 import org.mromichov.guessthesong.data.remote.yandex.YandexApi
@@ -31,9 +34,9 @@ class PlaylistRepositoryImplTest {
 
     private fun createRepository(
         mockEngine: MockEngine,
-        spotifyApi: SpotifyApi = SpotifyApi(SpotifyConfig("dummy", "dummy")),
         spotifyUrlParser: SpotifyPlaylistUrlParser = SpotifyPlaylistUrlParser(),
-        spotifyMapper: SpotifyMapper = SpotifyMapper()
+        spotifyMapper: SpotifyMapper = SpotifyMapper(),
+        dao: FakePlaylistTracksDao = FakePlaylistTracksDao(),
     ): PlaylistRepositoryImpl {
         val client = HttpClient(mockEngine) {
             install(ContentNegotiation) {
@@ -43,13 +46,15 @@ class PlaylistRepositoryImplTest {
         val yandexApi = YandexApi(client)
         val yandexParser = YandexPlaylistUrlParser()
         val yandexMapper = YandexMapper()
+        val spotifyApi = SpotifyApi(client)
         return PlaylistRepositoryImpl(
             yandexApi = yandexApi,
             yandexUrlParser = yandexParser,
             yandexMapper = yandexMapper,
             spotifyApi = spotifyApi,
             spotifyUrlParser = spotifyUrlParser,
-            spotifyMapper = spotifyMapper
+            spotifyMapper = spotifyMapper,
+            playlistTracksDao = dao,
         )
     }
 
@@ -88,6 +93,9 @@ class PlaylistRepositoryImplTest {
         assertEquals("Top Hits", playlist?.title)
         assertEquals(1, playlist?.tracks?.size)
         assertEquals("Song 1", playlist?.tracks?.first()?.title)
+        val saved = repository.getSavedPlaylists().getOrThrow().single()
+        assertEquals("Top Hits", saved.title)
+        assertEquals("Song 1", saved.tracks.single().title)
     }
 
     @Test
@@ -125,6 +133,70 @@ class PlaylistRepositoryImplTest {
         assertEquals("Uuid Hits", playlist?.title)
         assertEquals(1, playlist?.tracks?.size)
         assertEquals("Song 2", playlist?.tracks?.first()?.title)
+        val saved = repository.getSavedPlaylists().getOrThrow().single()
+        assertEquals("Uuid Hits", saved.title)
+        assertEquals("Song 2", saved.tracks.single().title)
+    }
+
+    @Test
+    fun getPlaylistByUrl_spotifyPlaylist_returnsSuccessPlaylist() = runTest {
+        val tracksJson = (0 until 20).joinToString(",") { index ->
+            """
+            {
+                "uri": "spotify:track:track_$index",
+                "title": "Spotify Song $index",
+                "subtitle": "Artist $index",
+                "duration": 180000
+            }
+            """.trimIndent()
+        }
+
+        val mockHtml = """
+        <!DOCTYPE html>
+        <html>
+        <body>
+        <script id="__NEXT_DATA__" type="application/json">
+        {
+            "props": {
+                "pageProps": {
+                    "state": {
+                        "data": {
+                            "entity": {
+                                "id": "37i9dQZF1DXcBWIGoYBM5M",
+                                "name": "Today's Top Hits",
+                                "trackList": [ $tracksJson ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        </script>
+        </body>
+        </html>
+        """.trimIndent()
+
+        val mockEngine = MockEngine {
+            respond(
+                content = mockHtml,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "text/html; charset=utf-8")
+            )
+        }
+
+        val repository = createRepository(mockEngine)
+        val result = repository.getPlaylistByUrl("https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M")
+
+        assertTrue(result.isSuccess)
+        val playlist = result.getOrNull()
+        assertEquals("37i9dQZF1DXcBWIGoYBM5M", playlist?.id)
+        assertEquals("Today's Top Hits", playlist?.title)
+        assertEquals(20, playlist?.tracks?.size)
+        assertEquals("Spotify Song 0", playlist?.tracks?.first()?.title)
+        val saved = repository.getSavedPlaylists().getOrThrow().single()
+        assertEquals("Today's Top Hits", saved.title)
+        assertEquals(20, saved.tracks.size)
+        assertEquals("Spotify Song 0", saved.tracks.first().title)
     }
 
     @Test
@@ -137,5 +209,30 @@ class PlaylistRepositoryImplTest {
 
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun getSavedPlaylist_readsLocalDataWithoutNetworkRequest() = runTest {
+        var requestCount = 0
+        val mockEngine = MockEngine {
+            requestCount++
+            error("Network should not be used for local playlist reads")
+        }
+        val dao = FakePlaylistTracksDao()
+        dao.insertPlaylistWithTracks(
+            PlaylistWithTracks(
+                playlist = PlaylistEntity(id = 42L, title = "Saved locally"),
+                tracks = listOf(TrackEntity(title = "Local song", artist = "Local artist")),
+            ),
+        )
+        val repository = createRepository(mockEngine, dao = dao)
+
+        val result = repository.getSavedPlaylist(42L)
+
+        assertTrue(result.isSuccess)
+        assertEquals("42", result.getOrThrow().id)
+        assertEquals("Saved locally", result.getOrThrow().title)
+        assertEquals("Local song", result.getOrThrow().tracks.single().title)
+        assertEquals(0, requestCount)
     }
 }

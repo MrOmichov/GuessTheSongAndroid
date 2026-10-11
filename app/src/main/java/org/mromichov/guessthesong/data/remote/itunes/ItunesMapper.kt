@@ -1,6 +1,5 @@
 package org.mromichov.guessthesong.data.remote.itunes
 
-import android.util.Log
 import org.mromichov.guessthesong.domain.model.TrackPreview
 import javax.inject.Inject
 
@@ -13,11 +12,10 @@ class ItunesMapper @Inject constructor() {
 
     fun toDomain(dto: ItunesTrackDto): TrackPreview {
         return TrackPreview(
-            trackId = dto.trackId,
-            trackName = dto.trackName.orEmpty(),
-            artistName = dto.artistName.orEmpty(),
-            previewUrl = dto.previewUrl.orEmpty(),
-            artworkUrl = dto.artworkUrl100
+            title = dto.trackName.orEmpty(),
+            artist = dto.artistName.orEmpty(),
+            trackPreviewUrl = dto.previewUrl.orEmpty(),
+            coverUrl = dto.artworkUrl100
         )
     }
 }

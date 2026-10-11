@@ -30,7 +30,6 @@ class YandexMapperTest {
 
         val domain = mapper.toDomain(dto)
 
-        assertEquals("101", domain.id)
         assertEquals("In the End", domain.title)
         assertEquals("Linkin Park, Jay-Z", domain.artist)
         assertEquals("https://avatars.yandex.net/get-music-content/101/400x400", domain.coverUrl)
@@ -85,12 +84,13 @@ class YandexMapperTest {
 
     @Test
     fun toDomain_webPlaylistResponse_mapsToPlaylistDomain() {
+        val tracksList = List(20) { index ->
+            YandexTrackDto(id = "$index", title = "Track $index", artists = listOf(YandexArtistDto(name = "Band A")))
+        }
         val response = YandexWebPlaylistResponseDto(
             playlist = YandexWebPlaylistDto(
                 title = "Rock Classics",
-                tracks = listOf(
-                    YandexTrackDto(id = "1", title = "Track 1", artists = listOf(YandexArtistDto(name = "Band A")))
-                )
+                tracks = tracksList
             )
         )
 
@@ -98,8 +98,8 @@ class YandexMapperTest {
 
         assertEquals("playlist-id-1", playlist.id)
         assertEquals("Rock Classics", playlist.title)
-        assertEquals(1, playlist.tracks.size)
-        assertEquals("Track 1", playlist.tracks[0].title)
+        assertEquals(20, playlist.tracks.size)
+        assertEquals("Track 0", playlist.tracks[0].title)
     }
 
     @Test
