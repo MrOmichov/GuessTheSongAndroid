@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
+import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
 import org.mromichov.guessthesong.presentation.startinput.component.InputUrlContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +36,14 @@ fun StartInputScreen(
                         text = "Guess the Song",
                         style = MaterialTheme.typography.headlineMedium
                     )
+                },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            painter = painterResource(R.drawable.settings),
+                            contentDescription = "Settings",
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
             )
@@ -81,10 +90,12 @@ fun StartInputScreen(
                 Spacer(Modifier.padding(16.dp))
 
                 if (uiState is StartInputUiState.Error) {
-                    Text(
-                        text = (uiState as StartInputUiState.Error).message,
-                        modifier = Modifier.width(300.dp),
-                    )
+                    ErrorContainer {
+                        Text(
+                            text = (uiState as StartInputUiState.Error).message,
+                            modifier = Modifier.width(300.dp),
+                        )
+                    }
                 } else if (uiState is StartInputUiState.Success) {
                     AppButton(
                         icon = painterResource(R.drawable.play),

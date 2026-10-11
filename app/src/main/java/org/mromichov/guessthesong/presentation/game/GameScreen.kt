@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppContainer
+import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
 
 @Composable
 fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
@@ -89,7 +90,9 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
 
                 is GameUiState.Error -> {
                     val state = uiState as GameUiState.Error
-                    Text(state.message)
+                    ErrorContainer {
+                        Text(state.message)
+                    }
                 }
             }
         }
@@ -98,8 +101,8 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
 
 @Composable
 private fun ListeningPreviewContent(viewModel: GameViewModel) {
-    val currentMs by viewModel.audioPlayer.currentMs.collectAsState()
-    val durationMs by viewModel.audioPlayer.durationMs.collectAsState()
+    val currentMs by viewModel.currentSeconds.collectAsState()
+    val durationMs by viewModel.durationSeconds.collectAsState()
     val targetProgress = if (durationMs > 0L) {
         (currentMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
     } else {
