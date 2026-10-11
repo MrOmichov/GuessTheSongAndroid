@@ -5,6 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.mromichov.guessthesong.core.network.HttpClientCreator
+import org.mromichov.guessthesong.data.dao.FakePlaylistTracksDao
 import org.mromichov.guessthesong.data.repository.TrackPreviewRepositoryImpl
 
 class ItunesLiveIntegrationTest {
@@ -19,7 +20,7 @@ class ItunesLiveIntegrationTest {
         val client = HttpClientCreator.create()
         try {
             val api = ItunesApi(client)
-            val repository = TrackPreviewRepositoryImpl(api, ItunesMapper())
+            val repository = TrackPreviewRepositoryImpl(api, ItunesMapper(), FakePlaylistTracksDao())
             val result = repository.getPreview(artist = "Linkin Park", title = "In the End")
 
             assertTrue("Expected successful preview lookup, got: ${result.exceptionOrNull()}", result.isSuccess)

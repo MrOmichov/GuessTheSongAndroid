@@ -11,7 +11,7 @@ interface PlaylistTracksDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlaylist(playlist: PlaylistEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTracks(trackEntities: List<TrackEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -33,5 +33,32 @@ interface PlaylistTracksDao {
     }
 
     @Query("SELECT track_preview_url FROM tracks WHERE title= :title AND artist= :artist LIMIT 1")
-    suspend fun findTrackPreviewUrlByTitleAndArtist(title: String, artist: String): String
+    suspend fun findTrackPreviewUrlByTitleAndArtist(title: String, artist: String): String?
+
+    @Query("UPDATE tracks SET track_preview_url = :previewUrl WHERE title = :title AND artist = :artist")
+    suspend fun updateTrackPreviewUrlByTitleAndArtist(
+        title: String,
+        artist: String,
+        previewUrl: String,
+    )
+
+    @Query("SELECT * FROM playlists ORDER BY id")
+    suspend fun getPlaylistEntities(): List<PlaylistEntity>
+
+    @Query("SELECT * FROM playlists WHERE id = :id")
+    suspend fun getPlaylistEntity(id: Long): PlaylistEntity?
+
+    @Query("SELECT tracks.* FROM tracks INNER JOIN playlist_tracks ON tracks.title = playlist_tracks.track_title AND tracks.artist = playlist_tracks.track_artist WHERE playlist_tracks.playlist_id = :id")
+    suspend fun getTracksForPlaylist(id: Long): List<TrackEntity>
+
+    // Explicit reads avoid a Room 3.0.2 composite-Junction code-generation failure.
+    @Transaction
+    suspend fun getSavedPlaylists(): List<PlaylistWithTracks> =
+        getPlaylistEntities().map { PlaylistWithTracks(it, getTracksForPlaylist(it.id)) }
+
+    @Transaction
+    suspend fun getSavedPlaylist(id: Long): PlaylistWithTracks? {
+        val playlist = getPlaylistEntity(id) ?: return null
+        return PlaylistWithTracks(playlist, getTracksForPlaylist(id))
+    }
 }

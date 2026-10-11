@@ -5,6 +5,7 @@ import androidx.room3.Room
 import dagger.Module
 import dagger.Provides
 import org.mromichov.guessthesong.core.database.PlaylistDatabase
+import org.mromichov.guessthesong.data.dao.PlaylistTracksDao
 import javax.inject.Singleton
 
 @Module
@@ -19,5 +20,8 @@ class DatabaseModule {
         ).fallbackToDestructiveMigration().build()
     }
 
+    @Provides
+    fun providePlaylistTracksDao(database: PlaylistDatabase): PlaylistTracksDao =
+        database.playlistTracksDao()
 
 }
