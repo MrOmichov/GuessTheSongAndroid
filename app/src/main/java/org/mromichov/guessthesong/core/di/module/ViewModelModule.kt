@@ -8,6 +8,7 @@ import dagger.multibindings.IntoMap
 import org.mromichov.guessthesong.core.di.ViewModelFactory
 import org.mromichov.guessthesong.core.di.ViewModelKey
 import org.mromichov.guessthesong.presentation.game.GameViewModel
+import org.mromichov.guessthesong.presentation.playlists.PlaylistsViewModel
 import org.mromichov.guessthesong.presentation.settings.SettingsViewModel
 import org.mromichov.guessthesong.presentation.startinput.StartInputViewModel
 
@@ -39,4 +40,10 @@ interface ViewModelModule {
         viewModel: SettingsViewModel
     ): ViewModel
 
+    @Binds
+    @IntoMap
+    @ViewModelKey(PlaylistsViewModel::class)
+    fun bindPlaylistsViewModel(
+        viewModel: PlaylistsViewModel
+    ): ViewModel
 }

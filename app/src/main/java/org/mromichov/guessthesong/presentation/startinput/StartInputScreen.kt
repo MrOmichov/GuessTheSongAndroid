@@ -22,7 +22,8 @@ import org.mromichov.guessthesong.presentation.startinput.component.InputUrlCont
 fun StartInputScreen(
     viewModel: StartInputViewModel,
     startGame: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onOpenPlaylists: () -> Unit,
 ) {
     var urlText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
@@ -92,6 +93,15 @@ fun StartInputScreen(
                     },
                     onClick = { viewModel.loadPlaylist(url = urlText) },
                     enabled = viewModel.canLoadPlaylist(url = urlText)
+                )
+
+                Spacer(Modifier.padding(16.dp))
+
+                AppButton(
+                    icon = painterResource(R.drawable.playlist_placeholder),
+                    text = "Сохранённые плейлисты",
+                    onClick = { onOpenPlaylists() },
+                    enabled = uiState is StartInputUiState.Loaded || uiState is StartInputUiState.Error || uiState is StartInputUiState.Idle
                 )
 
                 Spacer(Modifier.padding(16.dp))

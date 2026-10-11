@@ -9,6 +9,8 @@ import kotlinx.serialization.Serializable
 import org.mromichov.guessthesong.core.di.LocalViewModelProvider
 import org.mromichov.guessthesong.presentation.game.GameScreen
 import org.mromichov.guessthesong.presentation.game.GameViewModel
+import org.mromichov.guessthesong.presentation.playlists.PlaylistsScreen
+import org.mromichov.guessthesong.presentation.playlists.PlaylistsViewModel
 import org.mromichov.guessthesong.presentation.settings.SettingsScreen
 import org.mromichov.guessthesong.presentation.settings.SettingsViewModel
 import org.mromichov.guessthesong.presentation.startinput.StartInputScreen
@@ -24,6 +26,9 @@ object GameRoute
 @Serializable
 object SettingsRoute
 
+@Serializable
+object PlaylistsRoute
+
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -34,7 +39,8 @@ fun AppNavigation() {
             StartInputScreen(
                 viewModel = startInputViewModel,
                 startGame = { navController.navigate(GameRoute) },
-                onOpenSettings = { navController.navigate(SettingsRoute) }
+                onOpenSettings = { navController.navigate(SettingsRoute) },
+                onOpenPlaylists = { navController.navigate(PlaylistsRoute) },
             )
         }
 
@@ -47,6 +53,14 @@ fun AppNavigation() {
             val settingsViewModel: SettingsViewModel = viewModel(factory = LocalViewModelProvider.current)
             SettingsScreen(
                 viewModel = settingsViewModel,
+                back = { navController.popBackStack() }
+            )
+        }
+
+        composable<PlaylistsRoute> {
+            val playlistsViewModel: PlaylistsViewModel = viewModel(factory = LocalViewModelProvider.current)
+            PlaylistsScreen(
+                viewModel = playlistsViewModel,
                 back = { navController.popBackStack() }
             )
         }
