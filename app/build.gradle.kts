@@ -7,13 +7,6 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) {
-        load(file.inputStream())
-    }
-}
-
 android {
     namespace = "org.mromichov.guessthesong"
     compileSdk = 37
@@ -28,12 +21,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["redirectSchemeName"] = "guessthesong"
         manifestPlaceholders["redirectHostName"] = "callback"
-
-        val clientId = localProperties.getProperty("SPOTIFY_CLIENT_ID") ?: System.getenv("SPOTIFY_CLIENT_ID") ?: ""
-        val clientSecret = localProperties.getProperty("SPOTIFY_CLIENT_SECRET") ?: System.getenv("SPOTIFY_CLIENT_SECRET") ?: ""
-
-        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$clientId\"")
-        buildConfigField("String", "SPOTIFY_CLIENT_SECRET", "\"$clientSecret\"")
     }
 
     buildTypes {
