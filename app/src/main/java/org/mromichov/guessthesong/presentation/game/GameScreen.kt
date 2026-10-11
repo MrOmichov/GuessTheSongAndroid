@@ -2,25 +2,25 @@ package org.mromichov.guessthesong.presentation.game
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.mromichov.guessthesong.R
+import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppContainer
 import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
 
@@ -38,6 +38,7 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
                 is GameUiState.ListeningPreview -> {
                     ListeningPreviewContent(viewModel)
                 }
+
                 is GameUiState.Guessing -> {
                     val state = uiState as GameUiState.Guessing
                     Text("${state.currentRoundIndex}")
@@ -52,6 +53,7 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
                         }
                     }
                 }
+
                 is GameUiState.Answer -> {
                     val state = uiState as GameUiState.Answer
                     Column {
@@ -69,22 +71,30 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
                         }
                     }
 
-                    OutlinedButton(
-                        onClick = { viewModel.startRoundOrGameOver() }
-                    ) {
-                        Text("Дальше")
-                    }
-                }
-                is GameUiState.GameOver -> {
-                    Text(
-                        text = "Game Over",
-                        style = MaterialTheme.typography.bodyLarge
+                    AppButton(
+                        icon = painterResource(R.drawable.chevron_right),
+                        onClick = { viewModel.startRoundOrGameOver() },
+                        text = "Дальше"
                     )
+                }
 
-                    OutlinedButton(
-                        onClick = onEnd
-                    ) {
-                       Text("В главное меню")
+                is GameUiState.GameOver -> {
+                    val state = uiState as GameUiState.GameOver
+                    Column {
+                        Text(
+                            text = "Game Over",
+                            style = MaterialTheme.typography.headlineSmall,
+                        )
+                        Text(
+                            text = "Угадано: ${state.score}",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        AppButton(
+                            icon = painterResource(R.drawable.home),
+                            onClick = onEnd,
+                            text = "В главное меню"
+                        )
                     }
                 }
 
@@ -101,8 +111,8 @@ fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
 
 @Composable
 private fun ListeningPreviewContent(viewModel: GameViewModel) {
-    val currentMs by viewModel.currentSeconds.collectAsState()
-    val durationMs by viewModel.durationSeconds.collectAsState()
+    val currentMs by viewModel.currentMs.collectAsState()
+    val durationMs by viewModel.durationMs.collectAsState()
     val targetProgress = if (durationMs > 0L) {
         (currentMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
     } else {
@@ -120,10 +130,55 @@ private fun ListeningPreviewContent(viewModel: GameViewModel) {
     Column {
         Text("${viewModel.currentRoundIndex}")
         AppContainer {
-            LinearProgressIndicator(
-                progress = { animatableProgress.value },
+            BiDirectionalProgressBar(
+                progress = animatableProgress.value,
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.primaryContainer,
             )
-            Text(text = "$currentMs / $durationMs")
+            Text(text = "${currentMs / 1000} / ${durationMs / 1000}")
+        }
+    }
+}
+
+@Composable
+fun BiDirectionalProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Blue,
+    trackColor: Color = Color.LightGray,
+    strokeWidth: Dp = 8.dp
+) {
+    val coercedProgress = progress.coerceIn(0f, 1f)
+
+    Canvas(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(strokeWidth)
+    ) {
+        val width = size.width
+        val height = size.height
+        val centerY = height / 2
+        val strokeWidthPx = strokeWidth.toPx()
+
+        drawLine(
+            color = trackColor,
+            start = Offset(x = 0f, y = centerY),
+            end = Offset(x = width, y = centerY),
+            strokeWidth = strokeWidthPx,
+            cap = StrokeCap.Round
+        )
+
+        val startX = (width / 2) * coercedProgress
+        val endX = startX - width
+
+        if (coercedProgress > 0f) {
+            drawLine(
+                color = color,
+                start = Offset(x = startX, y = centerY),
+                end = Offset(x = endX, y = centerY),
+                strokeWidth = strokeWidthPx,
+                cap = StrokeCap.Round
+            )
         }
     }
 }

@@ -25,12 +25,8 @@ class GameViewModel @Inject constructor(
         MutableStateFlow(GameUiState.ListeningPreview(currentRoundIndex))
     val uiState = _uiState.asStateFlow()
     private var isListeningStarted = false
-    val currentSeconds: StateFlow<Int> = audioPlayer.currentMs.map {
-        (it / 1_000).toInt()
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(2_000), 0)
-    val durationSeconds: StateFlow<Int> = audioPlayer.durationMs.map {
-        (it / 1_000).toInt()
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(2_000), 0)
+    val currentMs: StateFlow<Long> = audioPlayer.currentMs
+    val durationMs: StateFlow<Long> = audioPlayer.durationMs
 
     init {
         startRoundOrGameOver()
