@@ -1,14 +1,17 @@
 package org.mromichov.guessthesong.presentation.settings
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.mromichov.guessthesong.presentation.settings.component.SettingsIntInputField
@@ -23,6 +26,7 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
     Scaffold(
         topBar = {
             TopGuessTheSongAppBar(back = back)
@@ -30,17 +34,27 @@ fun SettingsScreen(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         }
-    ) { paddingValues ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
-                .padding(paddingValues)
+                .fillMaxSize()
+                .padding(innerPadding)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { focusManager.clearFocus() })
+                },
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             when (uiState) {
                 SettingsUiState.Loading -> CircularProgressIndicator()
                 is SettingsUiState.Success -> {
                     val state = uiState as SettingsUiState.Success
+                    Spacer(Modifier.height(8.dp))
                     AppContainer {
-                        Row {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                             Text(
                                 text = "Количество раундов"
                             )
@@ -52,7 +66,11 @@ fun SettingsScreen(
                         }
                     }
                     AppContainer {
-                        Row {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                             Text(
                                 text = "Длина отрывка, с"
                             )
