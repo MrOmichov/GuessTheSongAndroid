@@ -120,7 +120,7 @@ dependencies {
 }
 
 tasks.register<Copy>("exportDebugApk") {
-    description = "Renames output APK file"
+    description = "Renames output debug APK file"
     dependsOn("assembleDebug")
     from(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
     into(layout.buildDirectory.dir("exports"))
@@ -128,6 +128,7 @@ tasks.register<Copy>("exportDebugApk") {
 }
 
 tasks.register<Copy>("exportSignedReleaseApk") {
+    description = "Renames output release APK file"
     from(layout.projectDirectory.dir("release")) {
         include("*.apk")
     }

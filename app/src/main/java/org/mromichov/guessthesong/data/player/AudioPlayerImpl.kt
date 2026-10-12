@@ -1,6 +1,7 @@
 package org.mromichov.guessthesong.data.player
 
 import android.content.Context
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -14,16 +15,10 @@ import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.preload.DefaultPreloadManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import org.mromichov.guessthesong.domain.player.AudioPlayer
 import java.io.File
 import javax.inject.Inject
@@ -38,7 +33,7 @@ class AudioPlayerImpl @Inject constructor(
     private val _isPlaying = MutableStateFlow(false)
     override val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
-    private val _snippetFinished= MutableStateFlow(true)
+    private val _snippetFinished = MutableStateFlow(true)
     override val snippetFinished: StateFlow<Boolean> = _snippetFinished.asStateFlow()
     private val _currentMs = MutableStateFlow(0L)
     override val currentMs: StateFlow<Long> = _currentMs.asStateFlow()
@@ -123,6 +118,7 @@ class AudioPlayerImpl @Inject constructor(
                     }
 
                     override fun onPlayerError(error: PlaybackException) {
+                        Log.e("AudioPlayer", "Playback failed", error)
                         _error.value = error
                     }
                 })

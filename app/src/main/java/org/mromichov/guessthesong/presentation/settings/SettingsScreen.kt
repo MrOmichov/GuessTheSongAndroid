@@ -3,20 +3,18 @@ package org.mromichov.guessthesong.presentation.settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
-import org.mromichov.guessthesong.R
+import org.mromichov.guessthesong.presentation.settings.component.SettingsIntInputField
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppContainer
+import org.mromichov.guessthesong.presentation.sharedcomponent.TopGuessTheSongAppBar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
@@ -27,22 +25,7 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Guess the Song",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = back) {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_back),
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-            )
+            TopGuessTheSongAppBar(back = back)
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
@@ -56,43 +39,15 @@ fun SettingsScreen(
                 SettingsUiState.Loading -> CircularProgressIndicator()
                 is SettingsUiState.Success -> {
                     val state = uiState as SettingsUiState.Success
-                    var roundsText by rememberSaveable { mutableStateOf(state.roundsNumber.toString()) }
-                    var snippetText by rememberSaveable { mutableStateOf(state.snippetLength.toString()) }
-                    var validRoundsText by rememberSaveable { mutableStateOf(state.roundsNumber.toString()) }
-                    var validSnippetText by rememberSaveable { mutableStateOf(state.snippetLength.toString()) }
-                    var roundsFocused by remember { mutableStateOf(false) }
-                    var snippetFocused by remember { mutableStateOf(false) }
                     AppContainer {
                         Row {
                             Text(
                                 text = "Количество раундов"
                             )
-                            OutlinedTextField(
-                                value = roundsText,
-                                modifier = Modifier.onFocusChanged { focus ->
-                                    if (roundsFocused && !focus.isFocused) roundsText = validRoundsText
-                                    roundsFocused = focus.isFocused
-                                },
-                                onValueChange = { newValue ->
-                                    roundsText = newValue
-                                    if (newValue.isNotEmpty()) {
-                                        val fieldInput = newValue.toIntOrNull()
-                                        val error = if (fieldInput == null) {
-                                            "Введите целое число"
-                                        } else {
-                                            viewModel.changeRoundsNumber(fieldInput)
-                                        }
-                                        if (error == null) {
-                                            validRoundsText = fieldInput.toString()
-                                        } else {
-                                            scope.launch { snackbarHostState.showSnackbar(error) }
-                                        }
-                                    }
-                                },
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Number
-                                ),
-                                singleLine = true
+                            SettingsIntInputField(
+                                initValue = state.roundsNumber.toString(),
+                                changeSetting = viewModel::changeRoundsNumber,
+                                showSnackbar = { error -> scope.launch { snackbarHostState.showSnackbar(error) } }
                             )
                         }
                     }
@@ -101,32 +56,10 @@ fun SettingsScreen(
                             Text(
                                 text = "Длина отрывка, с"
                             )
-                            OutlinedTextField(
-                                value = snippetText,
-                                modifier = Modifier.onFocusChanged { focus ->
-                                    if (snippetFocused && !focus.isFocused) snippetText = validSnippetText
-                                    snippetFocused = focus.isFocused
-                                },
-                                onValueChange = { newValue ->
-                                    snippetText = newValue
-                                    if (newValue.isNotEmpty()) {
-                                        val fieldInput = newValue.toIntOrNull()
-                                        val error = if (fieldInput == null) {
-                                            "Введите целое число"
-                                        } else {
-                                            viewModel.changeSnippetLength(fieldInput)
-                                        }
-                                        if (error == null) {
-                                            validSnippetText = fieldInput.toString()
-                                        } else {
-                                            scope.launch { snackbarHostState.showSnackbar(error) }
-                                        }
-                                    }
-                                },
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Number
-                                ),
-                                singleLine = true
+                            SettingsIntInputField(
+                                initValue = state.snippetLength.toString(),
+                                changeSetting = viewModel::changeSnippetLength,
+                                showSnackbar = { error -> scope.launch { snackbarHostState.showSnackbar(error) } }
                             )
                         }
                     }

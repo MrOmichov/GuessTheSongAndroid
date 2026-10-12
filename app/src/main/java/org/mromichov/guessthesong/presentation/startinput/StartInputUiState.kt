@@ -2,7 +2,6 @@ package org.mromichov.guessthesong.presentation.startinput
 
 import org.mromichov.guessthesong.domain.model.Playlist
 
-// TODO Добавить state Preparing, переименовать Success в ReadyToPlay
 sealed class StartInputUiState {
     data class ReadyToPlay(
         val playlist: Playlist

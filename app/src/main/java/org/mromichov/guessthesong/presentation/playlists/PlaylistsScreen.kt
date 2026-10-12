@@ -17,8 +17,8 @@ import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.domain.model.Playlist
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
 import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
+import org.mromichov.guessthesong.presentation.sharedcomponent.TopGuessTheSongAppBar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistsScreen(
     viewModel: PlaylistsViewModel,
@@ -28,21 +28,8 @@ fun PlaylistsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Guess the Song",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = back) {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_back),
-                            contentDescription = "Back"
-                        )
-                    }
-                },
+            TopGuessTheSongAppBar(
+                back = back,
             )
         }
     ) { innerPadding ->
@@ -61,7 +48,11 @@ fun PlaylistsScreen(
                     )
                 }
 
-                is PlaylistsUiState.Loading -> CircularProgressIndicator()
+                is PlaylistsUiState.Loading -> Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) { CircularProgressIndicator() }
+
                 is PlaylistsUiState.Loaded -> PlaylistsContent(
                     viewModel,
                     playlists = (uiState as PlaylistsUiState.Loaded).playlists
@@ -79,7 +70,7 @@ fun PlaylistsScreen(
 }
 
 @Composable
-fun PlaylistsContent(viewModel: PlaylistsViewModel, playlists: List<Playlist>) {
+private fun PlaylistsContent(viewModel: PlaylistsViewModel, playlists: List<Playlist>) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(8.dp),
@@ -91,7 +82,7 @@ fun PlaylistsContent(viewModel: PlaylistsViewModel, playlists: List<Playlist>) {
 }
 
 @Composable
-fun PlaylistCard(playlist: Playlist) {
+private fun PlaylistCard(playlist: Playlist) {
     Column {
         Box(
             modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant),
