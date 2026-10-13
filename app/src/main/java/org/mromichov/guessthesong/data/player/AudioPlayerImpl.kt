@@ -113,6 +113,7 @@ class AudioPlayerImpl @Inject constructor(
                         }
                         if (state == Player.STATE_ENDED) {
                             _currentMs.value = _durationMs.value
+                            _durationMs.value = 0L
                             _snippetFinished.value = true
                         }
                     }

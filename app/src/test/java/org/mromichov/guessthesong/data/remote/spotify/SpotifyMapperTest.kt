@@ -5,7 +5,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
-import org.mromichov.guessthesong.core.exception.TrackCountException
 import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyAudioPreviewDto
 import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyCoverArtDto
 import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyDataDto
@@ -89,8 +88,8 @@ class SpotifyMapperTest {
         assertEquals("https://mosaic.scdn.co/640/cover.jpg", domainPlaylist.tracks.first().coverUrl)
     }
 
-    @Test(expected = TrackCountException::class)
-    fun toDomain_lessThan20Tracks_throwsTrackCountException() {
+    @Test
+    fun toDomain_fiveTracks_mapsSuccessfully() {
         val tracks = List(5) { index ->
             SpotifyWebTrackDto(
                 uri = "spotify:track:track_$index",
@@ -116,7 +115,11 @@ class SpotifyMapperTest {
             )
         )
 
-        mapper.toDomain(playlistId = "short_playlist", dto = embedDto)
+        val domainPlaylist = mapper.toDomain(playlistId = "short_playlist", dto = embedDto)
+
+        assertEquals(5, domainPlaylist.tracks.size)
+        assertEquals("Track 0", domainPlaylist.tracks.first().title)
+        assertEquals("Artist 0", domainPlaylist.tracks.first().artist)
     }
 
     @Test

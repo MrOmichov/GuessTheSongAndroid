@@ -27,8 +27,6 @@ class YandexMapper @Inject constructor() {
         val webPlaylist = dto.playlist
         val tracks = webPlaylist?.tracks.orEmpty().map { toDomain(it) }
 
-        if (tracks.size < 20) throw TrackCountException()
-
         return Playlist(
             id = playlistId,
             title = webPlaylist?.title.orEmpty(),

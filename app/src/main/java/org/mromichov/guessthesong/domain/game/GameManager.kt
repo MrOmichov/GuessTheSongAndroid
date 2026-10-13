@@ -4,7 +4,8 @@ import org.mromichov.guessthesong.core.AppConsts.Companion.MAX_SNIPPET_LENGTH_IN
 import org.mromichov.guessthesong.core.AppConsts.Companion.MIN_SNIPPET_LENGTH_IN_SECONDS
 import org.mromichov.guessthesong.core.AppConsts.Companion.WRONG_OPTIONS_NUMBER
 import org.mromichov.guessthesong.core.exception.TrackCountException
-import org.mromichov.guessthesong.core.exception.TrackPreviewException
+import org.mromichov.guessthesong.core.exception.TrackPreviewCountException
+import org.mromichov.guessthesong.core.exception.TrackPreviewNotFoundException
 import org.mromichov.guessthesong.domain.model.GameRound
 import org.mromichov.guessthesong.domain.model.Playlist
 import org.mromichov.guessthesong.domain.model.Track
@@ -57,20 +58,34 @@ class GameManager @Inject constructor(
     suspend fun prepareRounds(playlist: Playlist, config: GameConfig) {
         validateConfig(config)
         this.config = config
-        val uniqueTracks = validatePlaylistAndGetUniqueTracks(playlist)
+        val uniqueShuffledTracks = validatePlaylistAndGetUniqueTracks(playlist).shuffled()
         val alreadySelected = mutableSetOf<Track>()
 
-        while (rounds.size != this.config.roundsNumber) {
-            val answerTrack = uniqueTracks.random()
+        for (answerTrack in uniqueShuffledTracks) {
+            if (rounds.size == config.roundsNumber) break
             if (alreadySelected.contains(answerTrack)) continue
 
             alreadySelected.add(answerTrack)
-            val round = prepareOneRound(answerTrack, uniqueTracks)
-            rounds.add(round)
+            prepareOneRound(answerTrack, uniqueShuffledTracks)
+                .onSuccess { rounds.add(it) }
+                .onFailure { error ->
+                    if (error is TrackPreviewNotFoundException) continue
+                    else throw error
+                }
+        }
+        if (rounds.size != config.roundsNumber) {
+            throw TrackPreviewCountException(
+                foundTrackPreviewCount = rounds.size,
+                neededTrackCount = config.roundsNumber
+            )
         }
     }
 
-    private suspend fun prepareOneRound(track: Track, allTracksInPlaylist: List<Track>): GameRound {
+    private suspend fun prepareOneRound(track: Track, allTracksInPlaylist: List<Track>): Result<GameRound> {
+        val trackPreview = trackPreviewRepository
+            .getPreview(track.artist, track.title)
+            .getOrElse { error -> return Result.failure(error) }
+
         val wrongOptions = mutableListOf<Track>()
         while (wrongOptions.size != WRONG_OPTIONS_NUMBER) {
             val randomTrack = allTracksInPlaylist.random()
@@ -78,13 +93,8 @@ class GameManager @Inject constructor(
                 wrongOptions.add(randomTrack)
             }
         }
-        val trackPreview: TrackPreview = trackPreviewRepository
-            .getPreview(track.artist, track.title)
-            .getOrElse {
-                throw TrackPreviewException()
-            }
 
-        return GameRound(track, trackPreview, wrongOptions)
+        return Result.success(GameRound(track, trackPreview, wrongOptions))
     }
 
     fun reset() {
@@ -109,7 +119,10 @@ class GameManager @Inject constructor(
             track.title to track.artist
         }
         if (uniqueTracks.size < maxOf(config.roundsNumber, WRONG_OPTIONS_NUMBER + 1)) {
-            throw TrackCountException()
+            throw TrackCountException(
+                actualTrackCount = uniqueTracks.size,
+                neededTrackCount = maxOf(config.roundsNumber, WRONG_OPTIONS_NUMBER + 1)
+            )
         }
         return uniqueTracks
     }
