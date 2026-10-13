@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 val signingPropertiesFile = rootProject.file("keystore.properties")
@@ -63,6 +64,32 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/INDEX.LIST"
+        }
+    }
+}
+
+kover {
+    reports {
+        variant("debug") {
+            html {
+                htmlDir = layout.buildDirectory.dir(
+                    "reports/kover/html/debug"
+                )
+            }
+            verify {
+                rule {
+                    minBound(60)
+                }
+            }
+            filters {
+                excludes {
+                    androidGeneratedClasses()
+                    classes(
+                        // excludes debug classes
+                        "*.DebugUtil"
+                    )
+                }
+            }
         }
     }
 }
