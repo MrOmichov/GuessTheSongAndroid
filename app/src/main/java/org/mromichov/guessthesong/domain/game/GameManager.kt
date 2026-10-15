@@ -7,7 +7,7 @@ import org.mromichov.guessthesong.core.exception.TrackCountException
 import org.mromichov.guessthesong.core.exception.TrackPreviewCountException
 import org.mromichov.guessthesong.core.exception.TrackPreviewNotFoundException
 import org.mromichov.guessthesong.domain.model.GameRound
-import org.mromichov.guessthesong.domain.model.Playlist
+import org.mromichov.guessthesong.domain.model.PlaylistContent
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.model.TrackPreview
 import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
@@ -55,7 +55,7 @@ class GameManager @Inject constructor(
         currentRoundIndex++
     }
 
-    suspend fun prepareRounds(playlist: Playlist, config: GameConfig) {
+    suspend fun prepareRounds(playlist: PlaylistContent, config: GameConfig) {
         validateConfig(config)
         this.config = config
         val uniqueShuffledTracks = validatePlaylistAndGetUniqueTracks(playlist).shuffled()
@@ -114,7 +114,7 @@ class GameManager @Inject constructor(
         }
     }
 
-    private fun validatePlaylistAndGetUniqueTracks(playlist: Playlist): List<Track> {
+    private fun validatePlaylistAndGetUniqueTracks(playlist: PlaylistContent): List<Track> {
         val uniqueTracks = playlist.tracks.distinctBy { track ->
             track.title to track.artist
         }

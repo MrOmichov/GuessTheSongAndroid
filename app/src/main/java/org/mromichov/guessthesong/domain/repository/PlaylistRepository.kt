@@ -1,14 +1,15 @@
 package org.mromichov.guessthesong.domain.repository
 
-import org.mromichov.guessthesong.domain.model.Playlist
+import org.mromichov.guessthesong.domain.model.LocalPlaylist
+import org.mromichov.guessthesong.domain.model.PlaylistContent
+import org.mromichov.guessthesong.domain.model.RemotePlaylist
 
 interface PlaylistRepository {
-    suspend fun fetchPlaylistByUrl(url: String): Result<Playlist>
-    suspend fun getPlaylistByUrl(url: String): Result<Playlist>
-    suspend fun getSavedPlaylists(): Result<List<Playlist>>
-    suspend fun getSavedPlaylist(id: Long): Result<Playlist>
-    suspend fun findSavedPlaylistByTitle(title: String): Result<Playlist?>
-    suspend fun savePlaylist(playlist: Playlist): Result<Playlist>
-    suspend fun replacePlaylist(existingId: Long, playlist: Playlist): Result<Playlist>
+    suspend fun fetchPlaylistByUrl(url: String): Result<RemotePlaylist>
+    suspend fun getLocalPlaylists(): Result<List<LocalPlaylist>>
+    suspend fun getLocalPlaylist(id: Long): Result<LocalPlaylist>
+    suspend fun findLocalPlaylistByTitle(title: String): Result<LocalPlaylist?>
+    suspend fun savePlaylist(playlistContent: PlaylistContent): Result<LocalPlaylist>
+    suspend fun replacePlaylist(existingId: Long, playlistContent: PlaylistContent): Result<LocalPlaylist>
     suspend fun deletePlaylist(id: Long): Result<Unit>
 }

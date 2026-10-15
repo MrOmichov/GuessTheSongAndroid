@@ -3,11 +3,11 @@ package org.mromichov.guessthesong.domain.game
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
-import org.mromichov.guessthesong.core.exception.TrackCountException
 import org.mromichov.guessthesong.core.exception.ItunesAccessForbiddenException
+import org.mromichov.guessthesong.core.exception.TrackCountException
 import org.mromichov.guessthesong.core.exception.TrackPreviewCountException
 import org.mromichov.guessthesong.core.exception.TrackPreviewNotFoundException
-import org.mromichov.guessthesong.domain.model.Playlist
+import org.mromichov.guessthesong.domain.model.PlaylistContent
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.model.TrackPreview
 import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
@@ -269,7 +269,7 @@ class GameManagerTest {
         Track(title = "title-$index", artist = "artist-$index", coverUrl = null, durationMs = 180_000)
     }
 
-    private fun playlist(tracks: List<Track>) = Playlist("playlist", "Playlist", tracks)
+    private fun playlist(tracks: List<Track>) = PlaylistContent("Playlist", tracks)
 
     private fun identity(track: Track) = track.title to track.artist
 

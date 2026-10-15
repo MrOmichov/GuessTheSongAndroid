@@ -35,10 +35,10 @@ class YandexLiveIntegrationTest {
             )
             val url = "https://music.yandex.ru/users/yamusic-top/playlists/1000"
 
-            val result = repository.getPlaylistByUrl(url)
+            val result = repository.fetchPlaylistByUrl(url)
 
             assertTrue("Expected success response, but got: ${result.exceptionOrNull()}", result.isSuccess)
-            val playlist = result.getOrThrow()
+            val playlist = result.getOrThrow().content
 
             println("=== LIVE YANDEX PLAYLIST ===")
             println("Title: ${playlist.title}")

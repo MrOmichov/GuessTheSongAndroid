@@ -13,7 +13,9 @@ import org.mromichov.guessthesong.data.remote.yandex.YandexApi
 import org.mromichov.guessthesong.data.remote.yandex.YandexMapper
 import org.mromichov.guessthesong.data.remote.yandex.YandexPlaylistTarget
 import org.mromichov.guessthesong.data.remote.yandex.YandexPlaylistUrlParser
-import org.mromichov.guessthesong.domain.model.Playlist
+import org.mromichov.guessthesong.domain.model.LocalPlaylist
+import org.mromichov.guessthesong.domain.model.PlaylistContent
+import org.mromichov.guessthesong.domain.model.RemotePlaylist
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 import javax.inject.Inject
@@ -28,7 +30,7 @@ class PlaylistRepositoryImpl @Inject constructor(
     private val playlistTracksDao: PlaylistTracksDao,
 ) : PlaylistRepository {
 
-    override suspend fun fetchPlaylistByUrl(url: String): Result<Playlist> {
+    override suspend fun fetchPlaylistByUrl(url: String): Result<RemotePlaylist> {
         return try {
             Result.success(fetchPlaylistByUrlInternal(url))
         } catch (cancellation: CancellationException) {
@@ -38,10 +40,10 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getPlaylistByUrl(url: String): Result<Playlist> {
+    override suspend fun getPlaylistByUrl(url: String): Result<RemotePlaylist> {
         return try {
             val playlist = fetchPlaylistByUrlInternal(url)
-            savePlaylist(playlist).getOrThrow()
+            savePlaylist(playlist.content).getOrThrow()
             Result.success(playlist)
         } catch (cancellation: CancellationException) {
             throw cancellation
@@ -50,52 +52,53 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getSavedPlaylists(): Result<List<Playlist>> = readSaved {
+    override suspend fun getLocalPlaylists(): Result<List<LocalPlaylist>> = readSaved {
         playlistTracksDao.getSavedPlaylists().map(::toDomain)
     }
 
-    override suspend fun getSavedPlaylist(id: Long): Result<Playlist> = readSaved {
+    override suspend fun getLocalPlaylist(id: Long): Result<LocalPlaylist> = readSaved {
         val savedPlaylist = playlistTracksDao.getSavedPlaylist(id)
             ?: throw NoSuchElementException("No saved playlist found for id: $id")
         toDomain(savedPlaylist)
     }
 
-    override suspend fun findSavedPlaylistByTitle(title: String): Result<Playlist?> = readSaved {
+    override suspend fun findLocalPlaylistByTitle(title: String): Result<LocalPlaylist?> = readSaved {
         playlistTracksDao.findSavedPlaylistByTitle(title)?.let(::toDomain)
     }
 
-    override suspend fun savePlaylist(playlist: Playlist): Result<Playlist> = writeSaved {
+    override suspend fun savePlaylist(playlistContent: PlaylistContent): Result<LocalPlaylist> = writeSaved {
         val playlistWithTracks = PlaylistWithTracks(
-            playlist = PlaylistEntity(title = playlist.title),
-            tracks = playlist.tracks.map { track ->
+            playlist = PlaylistEntity(title = playlistContent.title),
+            tracks = playlistContent.tracks.map { track ->
                 TrackEntity(title = track.title, artist = track.artist)
             },
         )
         val generatedId = playlistTracksDao.insertPlaylistWithTracks(playlistWithTracks)
-        playlist.copy(id = generatedId.toString())
+        LocalPlaylist(id = generatedId, content = playlistContent)
     }
 
-    override suspend fun replacePlaylist(existingId: Long, playlist: Playlist): Result<Playlist> = writeSaved {
-        val playlistWithTracks = PlaylistWithTracks(
-            playlist = PlaylistEntity(id = existingId, title = playlist.title),
-            tracks = playlist.tracks.map { track ->
-                TrackEntity(title = track.title, artist = track.artist)
-            },
-        )
-        playlistTracksDao.replacePlaylistWithTracks(playlistWithTracks)
-        playlist.copy(id = existingId.toString())
-    }
+    override suspend fun replacePlaylist(existingId: Long, playlistContent: PlaylistContent): Result<LocalPlaylist> =
+        writeSaved {
+            val playlistWithTracks = PlaylistWithTracks(
+                playlist = PlaylistEntity(id = existingId, title = playlistContent.title),
+                tracks = playlistContent.tracks.map { track ->
+                    TrackEntity(title = track.title, artist = track.artist)
+                },
+            )
+            playlistTracksDao.replacePlaylistWithTracks(playlistWithTracks)
+            LocalPlaylist(id = existingId, content = playlistContent)
+        }
 
     override suspend fun deletePlaylist(id: Long): Result<Unit> = writeSaved {
         playlistTracksDao.deletePlaylistWithTracks(id)
     }
 
-    private suspend fun fetchPlaylistByUrlInternal(url: String): Playlist {
+    private suspend fun fetchPlaylistByUrlInternal(url: String): RemotePlaylist {
         spotifyUrlParser.parse(url)?.let { target ->
             when (target) {
                 is SpotifyPlaylistTarget.Playlist -> {
                     val response = spotifyApi.getPlaylist(playlistId = target.id)
-                    return spotifyMapper.toDomain(playlistId = target.id, dto = response)
+                    return spotifyMapper.toDomain(playlistExternalId = target.id, dto = response)
                 }
             }
         }
@@ -127,16 +130,18 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun toDomain(savedPlaylist: PlaylistWithTracks): Playlist = Playlist(
-        id = savedPlaylist.playlist.id.toString(),
-        title = savedPlaylist.playlist.title,
-        tracks = savedPlaylist.tracks.map { track ->
-            Track(
-                title = track.title,
-                artist = track.artist,
-                coverUrl = null,
-                durationMs = 0L,
-            )
-        },
+    private fun toDomain(localPlaylistWithTracks: PlaylistWithTracks): LocalPlaylist = LocalPlaylist(
+        id = localPlaylistWithTracks.playlist.id,
+        content = PlaylistContent(
+            title = localPlaylistWithTracks.playlist.title,
+            tracks = localPlaylistWithTracks.tracks.map { track ->
+                Track(
+                    title = track.title,
+                    artist = track.artist,
+                    coverUrl = null,
+                    durationMs = 0L,
+                )
+            },
+        ),
     )
 }

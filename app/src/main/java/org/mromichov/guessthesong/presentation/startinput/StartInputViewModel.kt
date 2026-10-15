@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.mromichov.guessthesong.domain.game.GameConfig
 import org.mromichov.guessthesong.domain.game.GameManager
-import org.mromichov.guessthesong.domain.model.Playlist
+import org.mromichov.guessthesong.domain.model.PlaylistContent
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 import org.mromichov.guessthesong.domain.repository.SettingsRepository
 import javax.inject.Inject
@@ -25,7 +25,7 @@ class StartInputViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     // TODO тоже странная вещь прямо во ViewModel
-    private lateinit var playlist: Playlist
+    private lateinit var playlist: PlaylistContent
 
     fun loadPlaylist(url: String) {
         if (!canLoadPlaylist(url)) return
@@ -33,7 +33,7 @@ class StartInputViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val importedPlaylist = playlistRepository.fetchPlaylistByUrl(url).getOrThrow()
-                val savedPlaylist = playlistRepository.findSavedPlaylistByTitle(importedPlaylist.title).getOrThrow()
+                val savedPlaylist = playlistRepository.findLocalPlaylistByTitle(importedPlaylist.title).getOrThrow()
                 if (savedPlaylist != null) {
                     _uiState.value = StartInputUiState.PlaylistAlreadySavedConflict(
                         savedPlaylistId = savedPlaylist.id.toLong(),
@@ -88,13 +88,13 @@ class StartInputViewModel @Inject constructor(
         return state is StartInputUiState.Loaded || state is StartInputUiState.Idle || state is StartInputUiState.Error
     }
 
-    fun replacePlaylist(existingPlaylistId: Long, playlist: Playlist) {
+    fun replacePlaylist(existingPlaylistId: Long, playlist: PlaylistContent) {
         val state = _uiState.value as? StartInputUiState.PlaylistAlreadySavedConflict ?: return
         if (state.savedPlaylistId != existingPlaylistId || state.savedPlaylist != playlist) return
         saveConflictPlaylist { playlistRepository.replacePlaylist(existingPlaylistId, playlist) }
     }
 
-    fun addPlaylist(playlist: Playlist) {
+    fun addPlaylist(playlist: PlaylistContent) {
         val state = _uiState.value as? StartInputUiState.PlaylistAlreadySavedConflict ?: return
         if (state.savedPlaylist != playlist) return
         saveConflictPlaylist { playlistRepository.savePlaylist(playlist) }
@@ -106,7 +106,7 @@ class StartInputViewModel @Inject constructor(
         }
     }
 
-    private fun saveConflictPlaylist(save: suspend () -> Result<Playlist>) {
+    private fun saveConflictPlaylist(save: suspend () -> Result<PlaylistContent>) {
         _uiState.value = StartInputUiState.Loading
         viewModelScope.launch {
             try {

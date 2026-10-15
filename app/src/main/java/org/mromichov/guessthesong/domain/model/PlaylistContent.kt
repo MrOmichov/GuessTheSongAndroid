@@ -1,7 +1,6 @@
 package org.mromichov.guessthesong.domain.model
 
-data class Playlist(
-    val id: String,
+data class PlaylistContent(
     val title: String,
     val tracks: List<Track>
 )

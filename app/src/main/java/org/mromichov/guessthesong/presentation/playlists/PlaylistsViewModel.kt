@@ -22,7 +22,7 @@ class PlaylistsViewModel @Inject constructor(
         if (uiState.value is PlaylistsUiState.Loading) return
         _uiState.value = PlaylistsUiState.Loading
         viewModelScope.launch {
-            playlistRepository.getSavedPlaylists()
+            playlistRepository.getLocalPlaylists()
                 .onSuccess { playlists ->
                     if (playlists.isEmpty())
                         _uiState.value = PlaylistsUiState.LoadedEmpty

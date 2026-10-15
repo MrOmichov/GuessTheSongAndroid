@@ -10,6 +10,7 @@ import org.mromichov.guessthesong.data.remote.yandex.dto.YandexArtistDto
 import org.mromichov.guessthesong.data.remote.yandex.dto.YandexTrackDto
 import org.mromichov.guessthesong.data.remote.yandex.dto.YandexWebPlaylistDto
 import org.mromichov.guessthesong.data.remote.yandex.dto.YandexWebPlaylistResponseDto
+import org.mromichov.guessthesong.domain.model.PlaylistProvider
 
 class YandexMapperTest {
 
@@ -96,10 +97,11 @@ class YandexMapperTest {
 
         val playlist = mapper.toDomain("playlist-id-1", response)
 
-        assertEquals("playlist-id-1", playlist.id)
-        assertEquals("Rock Classics", playlist.title)
-        assertEquals(20, playlist.tracks.size)
-        assertEquals("Track 0", playlist.tracks[0].title)
+        assertEquals(PlaylistProvider.YANDEX_MUSIC, playlist.source.provider)
+        assertEquals("playlist-id-1", playlist.source.externalId)
+        assertEquals("Rock Classics", playlist.content.title)
+        assertEquals(20, playlist.content.tracks.size)
+        assertEquals("Track 0", playlist.content.tracks[0].title)
     }
 
     @Test
@@ -118,9 +120,10 @@ class YandexMapperTest {
 
         val playlist = mapper.toDomain("uuid-123", response)
 
-        assertEquals("uuid-123", playlist.id)
-        assertEquals("Pop Hits", playlist.title)
-        assertEquals(1, playlist.tracks.size)
-        assertEquals("Track 2", playlist.tracks[0].title)
+        assertEquals(PlaylistProvider.YANDEX_MUSIC, playlist.source.provider)
+        assertEquals("uuid-123", playlist.source.externalId)
+        assertEquals("Pop Hits", playlist.content.title)
+        assertEquals(1, playlist.content.tracks.size)
+        assertEquals("Track 2", playlist.content.tracks[0].title)
     }
 }
