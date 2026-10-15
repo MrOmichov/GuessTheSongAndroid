@@ -33,7 +33,10 @@ class YandexMapper @Inject constructor() {
         val playlistSource = PlaylistSource(PlaylistProvider.YANDEX_MUSIC, playlistId)
         val playlistContent = PlaylistContent(
             title = webPlaylist?.title ?: "Yandex Music Playlist",
-            tracks = tracks
+            tracks = tracks,
+            coverUrl = webPlaylist?.let { playlist ->
+                (playlist.cover?.uri ?: playlist.ogImage)?.let(::formatCoverUrl)
+            }
         )
 
         return RemotePlaylist(
@@ -51,7 +54,10 @@ class YandexMapper @Inject constructor() {
         val playlistSource = PlaylistSource(PlaylistProvider.YANDEX_MUSIC, playlistId)
         val playlistContent = PlaylistContent(
             title = apiPlaylist?.title ?: "Yandex Music Playlist",
-            tracks = tracks
+            tracks = tracks,
+            coverUrl = apiPlaylist?.let { playlist ->
+                (playlist.cover?.uri ?: playlist.ogImage)?.let(::formatCoverUrl)
+            }
         )
 
         return RemotePlaylist(

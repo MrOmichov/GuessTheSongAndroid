@@ -11,6 +11,7 @@ import org.junit.Test
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
 import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 
@@ -123,10 +124,10 @@ class PlaylistsViewModelTest {
         override suspend fun findLocalPlaylistByTitle(title: String): Result<LocalPlaylist?> =
             error("Not used by PlaylistsViewModel")
 
-        override suspend fun savePlaylist(playlist: PlaylistContent): Result<LocalPlaylist> =
+        override suspend fun savePlaylist(playlist: PlaylistContent, provider: PlaylistProvider?): Result<LocalPlaylist> =
             error("Not used by PlaylistsViewModel")
 
-        override suspend fun replacePlaylist(existingId: Long, playlist: PlaylistContent): Result<LocalPlaylist> =
+        override suspend fun replacePlaylist(existingId: Long, playlist: PlaylistContent, provider: PlaylistProvider?): Result<LocalPlaylist> =
             error("Not used by PlaylistsViewModel")
 
         override suspend fun deletePlaylist(id: Long): Result<Unit> =

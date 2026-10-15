@@ -1,0 +1,13 @@
+<!-- Official Yandex Music alternative icon SVG: https://yastatic.net/s3/doc-binary/src/mediaservices/yandex_music_icon_alternative.svg -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="441.72"
+    android:viewportHeight="445">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M441.72,222.5 A220.86,222.5 0,1 0,0 222.5 A220.86,222.5 0,1 0,441.72 222.5 Z" />
+    <path
+        android:fillColor="#FFEE00"
+        android:pathData="M388.71,178.2 L387.28,171.45 330.98,161.52 363.75,116.78 359.98,112.4 311.8,135.79 317.89,73.8 312.96,70.89 283.65,121.17 250.84,46.33 245.06,46.33 252.88,118.53 170.16,51.57 163.19,53.63 226.77,134.63 100.8,92.23 94.99,98.66 207.6,163.57 52.32,176.73 50.59,186.38 211.95,204.2 77.28,317.09 83.09,324.97 243.29,236.67 211.67,392.23 221.26,392.23 282.77,245.74 320.23,360.35 326.9,355.07 311.53,238.72 369.84,305.68 373.61,299.52 328.94,216.49 391.33,239.89 391.9,232.86 335.91,191.04 388.71,178.2 Z" />
+</vector>

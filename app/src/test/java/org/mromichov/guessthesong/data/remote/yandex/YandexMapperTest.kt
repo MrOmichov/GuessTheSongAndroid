@@ -1,5 +1,6 @@
 package org.mromichov.guessthesong.data.remote.yandex
 
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -85,7 +86,8 @@ class YandexMapperTest {
         val response = YandexWebPlaylistResponseDto(
             playlist = YandexWebPlaylistDto(
                 title = "Rock Classics",
-                tracks = tracksList
+                tracks = tracksList,
+                cover = YandexPlaylistCoverDto(uri = "avatars.yandex.net/playlist/%%")
             )
         )
 
@@ -94,6 +96,7 @@ class YandexMapperTest {
         assertEquals(PlaylistProvider.YANDEX_MUSIC, playlist.source.provider)
         assertEquals("playlist-id-1", playlist.source.externalId)
         assertEquals("Rock Classics", playlist.content.title)
+        assertEquals("https://avatars.yandex.net/playlist/400x400", playlist.content.coverUrl)
         assertEquals(20, playlist.content.tracks.size)
         assertEquals("Track 0", playlist.content.tracks[0].title)
     }
@@ -103,6 +106,7 @@ class YandexMapperTest {
         val response = YandexApiPlaylistResponseDto(
             result = YandexApiPlaylistDto(
                 title = "Pop Hits",
+                ogImage = "https://avatars.yandex.net/pop/%%",
                 tracks = listOf(
                     YandexApiTrackContainerDto(
                         id = 1,
@@ -121,7 +125,26 @@ class YandexMapperTest {
         assertEquals(PlaylistProvider.YANDEX_MUSIC, playlist.source.provider)
         assertEquals("uuid-123", playlist.source.externalId)
         assertEquals("Pop Hits", playlist.content.title)
+        assertEquals("https://avatars.yandex.net/pop/400x400", playlist.content.coverUrl)
         assertEquals(1, playlist.content.tracks.size)
         assertEquals("Track 2", playlist.content.tracks[0].title)
+    }
+
+    @Test
+    fun playlistCoverDto_serializesApiAndWebCoverFieldsAndToleratesMissingFields() {
+        val json = Json { ignoreUnknownKeys = true }
+        val api = json.decodeFromString<YandexApiPlaylistResponseDto>(
+            """{"result":{"title":"API playlist","cover":{"uri":"avatars.yandex.net/api/%%"},"ogImage":"https://avatars.yandex.net/api-og/%%","tracks":[]}}""",
+        )
+        val web = json.decodeFromString<YandexWebPlaylistResponseDto>(
+            """{"playlist":{"title":"Web playlist","ogImage":"avatars.yandex.net/web/%%","tracks":[]}}""",
+        )
+        val withoutCover = json.decodeFromString<YandexApiPlaylistResponseDto>(
+            """{"result":{"title":"No cover","tracks":[]}}""",
+        )
+
+        assertEquals("https://avatars.yandex.net/api/400x400", mapper.toDomain("api", api).content.coverUrl)
+        assertEquals("https://avatars.yandex.net/web/400x400", mapper.toDomain("web", web).content.coverUrl)
+        assertNull(mapper.toDomain("legacy", withoutCover).content.coverUrl)
     }
 }

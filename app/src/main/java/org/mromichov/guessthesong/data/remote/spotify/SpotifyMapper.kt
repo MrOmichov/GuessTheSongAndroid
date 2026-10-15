@@ -33,7 +33,8 @@ class SpotifyMapper @Inject constructor() {
         val playlistSource = PlaylistSource(PlaylistProvider.SPOTIFY, playlistExternalId)
         val playlistContent = PlaylistContent(
             title = title,
-            tracks = tracks
+            tracks = tracks,
+            coverUrl = coverUrl
         )
         return RemotePlaylist(source = playlistSource, content = playlistContent)
     }

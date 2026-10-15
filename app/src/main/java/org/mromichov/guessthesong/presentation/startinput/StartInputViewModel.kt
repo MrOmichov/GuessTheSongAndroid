@@ -42,7 +42,9 @@ class StartInputViewModel @Inject constructor(
                         fetchedPlaylist = fetchedPlaylist,
                     )
                 } else {
-                    playlistContent = playlistRepository.savePlaylist(fetchedPlaylist.content).getOrThrow().content
+                    playlistContent = playlistRepository.savePlaylist(
+                        fetchedPlaylist.content, fetchedPlaylist.source.provider,
+                    ).getOrThrow().content
                     _uiState.value = StartInputUiState.Loaded(playlistContent)
                 }
             } catch (error: CancellationException) {
@@ -92,13 +94,15 @@ class StartInputViewModel @Inject constructor(
     fun replacePlaylist(existingPlaylistId: Long, playlistContent: PlaylistContent) {
         val state = _uiState.value as? StartInputUiState.PlaylistAlreadySavedConflict ?: return
         if (state.alreadyExistingPlaylist.id != existingPlaylistId || state.fetchedPlaylist.content != playlistContent) return
-        saveConflictPlaylist { playlistRepository.replacePlaylist(existingPlaylistId, playlistContent) }
+        saveConflictPlaylist {
+            playlistRepository.replacePlaylist(existingPlaylistId, playlistContent, state.fetchedPlaylist.source.provider)
+        }
     }
 
     fun addPlaylist(playlistContent: PlaylistContent) {
         val state = _uiState.value as? StartInputUiState.PlaylistAlreadySavedConflict ?: return
         if (state.fetchedPlaylist.content != playlistContent) return
-        saveConflictPlaylist { playlistRepository.savePlaylist(playlistContent) }
+        saveConflictPlaylist { playlistRepository.savePlaylist(playlistContent, state.fetchedPlaylist.source.provider) }
     }
 
     fun dismissPlaylistConflict() {

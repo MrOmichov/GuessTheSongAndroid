@@ -67,6 +67,7 @@ class StartInputViewModelTest {
         assertSame(StartInputUiState.Loading, viewModel.uiState.value)
         assertEquals(1, repository.replaceCalls)
         assertEquals(0, repository.saveCalls)
+        assertEquals(PlaylistProvider.SPOTIFY, repository.lastReplacedProvider)
 
         pendingReplace.complete(Result.success(saved))
         advanceUntilIdle()
@@ -116,6 +117,7 @@ class StartInputViewModelTest {
 
         assertEquals(StartInputUiState.Loaded(saved.content), viewModel.uiState.value)
         assertEquals(1, repository.saveCalls)
+        assertEquals(PlaylistProvider.SPOTIFY, repository.lastSavedProvider)
         assertEquals(0, repository.replaceCalls)
     }
 
@@ -178,7 +180,7 @@ class StartInputViewModelTest {
         val imported = playlist("New mix")
         val saved = localPlaylist(42L, "New mix")
         val repository = FakePlaylistRepository(
-            fetched = Result.success(remotePlaylist("remote-id", imported)),
+            fetched = Result.success(remotePlaylist("remote-id", imported, PlaylistProvider.YANDEX_MUSIC)),
             savedByTitle = Result.success(null),
             save = { Result.success(saved) },
         )
@@ -189,6 +191,7 @@ class StartInputViewModelTest {
 
         assertEquals(StartInputUiState.Loaded(saved.content), viewModel.uiState.value)
         assertEquals(1, repository.saveCalls)
+        assertEquals(PlaylistProvider.YANDEX_MUSIC, repository.lastSavedProvider)
     }
 
     @Test
@@ -222,8 +225,12 @@ class StartInputViewModelTest {
 
     private fun playlist(title: String) = PlaylistContent(title, emptyList())
     private fun localPlaylist(id: Long, title: String) = LocalPlaylist(id, playlist(title))
-    private fun remotePlaylist(id: String, content: PlaylistContent) = RemotePlaylist(
-        PlaylistSource(PlaylistProvider.SPOTIFY, id), content,
+    private fun remotePlaylist(
+        id: String,
+        content: PlaylistContent,
+        provider: PlaylistProvider = PlaylistProvider.SPOTIFY,
+    ) = RemotePlaylist(
+        PlaylistSource(provider, id), content,
     )
 
     private class FakePlaylistRepository(
@@ -245,18 +252,22 @@ class StartInputViewModelTest {
     ) : PlaylistRepository {
         var saveCalls = 0
         var replaceCalls = 0
+        var lastSavedProvider: PlaylistProvider? = null
+        var lastReplacedProvider: PlaylistProvider? = null
 
         override suspend fun fetchPlaylistByUrl(url: String) = fetched
         override suspend fun getLocalPlaylists(): Result<List<LocalPlaylist>> = error("Not used")
         override suspend fun getLocalPlaylist(id: Long): Result<LocalPlaylist> = error("Not used")
         override suspend fun findLocalPlaylistByTitle(title: String) = savedByTitle
-        override suspend fun savePlaylist(playlist: PlaylistContent): Result<LocalPlaylist> {
+        override suspend fun savePlaylist(playlist: PlaylistContent, provider: PlaylistProvider?): Result<LocalPlaylist> {
             saveCalls++
+            lastSavedProvider = provider
             return save(playlist)
         }
 
-        override suspend fun replacePlaylist(existingId: Long, playlist: PlaylistContent): Result<LocalPlaylist> {
+        override suspend fun replacePlaylist(existingId: Long, playlist: PlaylistContent, provider: PlaylistProvider?): Result<LocalPlaylist> {
             replaceCalls++
+            lastReplacedProvider = provider
             return replace(existingId, playlist)
         }
 

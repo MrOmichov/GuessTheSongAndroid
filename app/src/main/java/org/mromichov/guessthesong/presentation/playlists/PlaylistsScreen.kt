@@ -8,13 +8,21 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import java.io.File
 import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
 import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
 import org.mromichov.guessthesong.presentation.sharedcomponent.TopGuessTheSongAppBar
@@ -82,17 +90,59 @@ private fun PlaylistsContent(viewModel: PlaylistsViewModel, playlists: List<Loca
 }
 
 @Composable
-private fun PlaylistCard(playlist: LocalPlaylist) {
-    Column {
-        Box(
-            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.playlist_placeholder),
-                contentDescription = "Playlist ${playlist.id}"
+internal fun PlaylistCard(playlist: LocalPlaylist) {
+    val context = LocalContext.current
+    val coverFile = remember(playlist.coverFileName, context.filesDir) {
+        playlist.coverFileName
+            ?.takeIf { it.isNotBlank() && File(it).name == it }
+            ?.let { File(File(context.filesDir, "playlist-covers"), it) }
+    }
+
+    Box {
+        Column {
+            AsyncImage(
+                model = coverFile,
+                contentDescription = "Обложка плейлиста ${playlist.content.title}",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                placeholder = painterResource(R.drawable.playlist_placeholder),
+                error = painterResource(R.drawable.playlist_placeholder),
+                fallback = painterResource(R.drawable.playlist_placeholder),
+                contentScale = ContentScale.Crop
+            )
+            Text(
+                text = playlist.content.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, end = 36.dp, bottom = 8.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
-        Text(playlist.content.title, style = MaterialTheme.typography.bodyMedium)
+
+        val providerIcon = when (playlist.provider) {
+            PlaylistProvider.SPOTIFY -> R.drawable.spotify_logo
+            PlaylistProvider.YANDEX_MUSIC -> R.drawable.yandex_music_logo
+            null -> null
+        }
+        val providerDescription = when (playlist.provider) {
+            PlaylistProvider.SPOTIFY -> "Spotify"
+            PlaylistProvider.YANDEX_MUSIC -> "Яндекс Музыка"
+            null -> null
+        }
+        if (providerIcon != null && providerDescription != null) {
+            Icon(
+                painter = painterResource(providerIcon),
+                contentDescription = providerDescription,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp)
+                    .size(20.dp),
+                tint = Color.Unspecified
+            )
+        }
     }
 }

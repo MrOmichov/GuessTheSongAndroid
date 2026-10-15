@@ -22,7 +22,14 @@ data class YandexTrackDto(
 @Serializable
 data class YandexWebPlaylistDto(
     @SerialName("title") val title: String? = null,
-    @SerialName("tracks") val tracks: List<YandexTrackDto> = emptyList()
+    @SerialName("tracks") val tracks: List<YandexTrackDto> = emptyList(),
+    @SerialName("cover") val cover: YandexPlaylistCoverDto? = null,
+    @SerialName("ogImage") val ogImage: String? = null
+)
+
+@Serializable
+data class YandexPlaylistCoverDto(
+    @SerialName("uri") val uri: String? = null
 )
 
 @Serializable
@@ -39,7 +46,9 @@ data class YandexApiTrackContainerDto(
 @Serializable
 data class YandexApiPlaylistDto(
     @SerialName("title") val title: String? = null,
-    @SerialName("tracks") val tracks: List<YandexApiTrackContainerDto> = emptyList()
+    @SerialName("tracks") val tracks: List<YandexApiTrackContainerDto> = emptyList(),
+    @SerialName("cover") val cover: YandexPlaylistCoverDto? = null,
+    @SerialName("ogImage") val ogImage: String? = null
 )
 
 @Serializable

@@ -73,6 +73,7 @@ class SpotifyMapperTest {
         assertEquals(PlaylistProvider.SPOTIFY, domainPlaylist.source.provider)
         assertEquals("4lcPGoGgUtNpexPogG2ctm", domainPlaylist.source.externalId)
         assertEquals("Dream Theater ballads", domainPlaylist.content.title)
+        assertEquals("https://mosaic.scdn.co/640/cover.jpg", domainPlaylist.content.coverUrl)
         assertEquals(20, domainPlaylist.content.tracks.size)
         assertEquals("Track 0", domainPlaylist.content.tracks.first().title)
         assertEquals("Artist 0", domainPlaylist.content.tracks.first().artist)
@@ -109,6 +110,7 @@ class SpotifyMapperTest {
         val domainPlaylist = mapper.toDomain(playlistExternalId = "short_playlist", dto = embedDto)
 
         assertEquals(5, domainPlaylist.content.tracks.size)
+        assertNull(domainPlaylist.content.coverUrl)
         assertEquals("Track 0", domainPlaylist.content.tracks.first().title)
         assertEquals("Artist 0", domainPlaylist.content.tracks.first().artist)
     }

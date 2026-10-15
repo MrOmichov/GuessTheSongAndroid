@@ -64,6 +64,12 @@ interface PlaylistTracksDao {
     @Query("UPDATE playlists SET title = :title WHERE id = :id")
     suspend fun updatePlaylistTitle(id: Long, title: String)
 
+    @Query("UPDATE playlists SET title = :title, coverFileName = :coverFileName, provider = :provider WHERE id = :id")
+    suspend fun updatePlaylistMetadata(id: Long, title: String, coverFileName: String?, provider: String?): Int
+
+    @Query("SELECT coverFileName FROM playlists WHERE coverFileName IS NOT NULL")
+    suspend fun getCoverFileNames(): List<String>
+
     // Explicit reads avoid a Room 3.0.2 composite-Junction code-generation failure.
     @Transaction
     suspend fun getSavedPlaylists(): List<PlaylistWithTracks> =
@@ -84,7 +90,10 @@ interface PlaylistTracksDao {
     @Transaction
     suspend fun replacePlaylistWithTracks(playlistWithTracks: PlaylistWithTracks) {
         val playlistId = playlistWithTracks.playlist.id
-        updatePlaylistTitle(playlistId, playlistWithTracks.playlist.title)
+        val playlist = playlistWithTracks.playlist
+        check(updatePlaylistMetadata(playlistId, playlist.title, playlist.coverFileName, playlist.provider) == 1) {
+            "No saved playlist found for id: $playlistId"
+        }
         deletePlaylistCrossRefs(playlistId)
         val tracksToInsert = playlistWithTracks.tracks.map { track ->
             track.copy(title = track.title, artist = track.artist)
