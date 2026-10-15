@@ -7,9 +7,9 @@ import org.mromichov.guessthesong.core.exception.ItunesAccessForbiddenException
 import org.mromichov.guessthesong.core.exception.TrackCountException
 import org.mromichov.guessthesong.core.exception.TrackPreviewCountException
 import org.mromichov.guessthesong.core.exception.TrackPreviewNotFoundException
-import org.mromichov.guessthesong.domain.model.PlaylistContent
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.model.TrackPreview
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
 import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
 
 class GameManagerTest {

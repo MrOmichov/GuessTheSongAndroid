@@ -8,9 +8,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
-import org.mromichov.guessthesong.domain.model.PlaylistContent
-import org.mromichov.guessthesong.domain.model.LocalPlaylist
 import org.mromichov.guessthesong.domain.model.Track
+import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -116,7 +117,7 @@ class PlaylistsViewModelTest {
         override suspend fun getLocalPlaylist(id: Long): Result<LocalPlaylist> =
             error("Not used by PlaylistsViewModel")
 
-        override suspend fun fetchPlaylistByUrl(url: String): Result<org.mromichov.guessthesong.domain.model.RemotePlaylist> =
+        override suspend fun fetchPlaylistByUrl(url: String): Result<RemotePlaylist> =
             error("Not used by PlaylistsViewModel")
 
         override suspend fun findLocalPlaylistByTitle(title: String): Result<LocalPlaylist?> =

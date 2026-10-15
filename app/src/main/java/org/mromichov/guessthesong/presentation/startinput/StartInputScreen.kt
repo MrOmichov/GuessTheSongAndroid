@@ -98,10 +98,12 @@ fun StartInputContent(
         if (uiState is StartInputUiState.PlaylistAlreadySavedConflict) {
             val state = uiState
             PlaylistAlreadySavedDialog(
-                state.savedPlaylistTitle,
+                state.alreadyExistingPlaylist.content.title,
                 onDismissRequest = viewModel::dismissPlaylistConflict,
-                onReplace = { viewModel.replacePlaylist(state.savedPlaylistId, state.savedPlaylist) },
-                onAdd = { viewModel.addPlaylist(state.savedPlaylist) }
+                onReplace = {
+                    viewModel.replacePlaylist(state.alreadyExistingPlaylist.id, state.fetchedPlaylist.content)
+                },
+                onAdd = { viewModel.addPlaylist(state.fetchedPlaylist.content) }
             )
         }
 
@@ -111,7 +113,7 @@ fun StartInputContent(
             when (uiState) {
                 is StartInputUiState.Loaded -> ContentWithLoadedPlaylist(
                     viewModel,
-                    uiState.playlist.title,
+                    uiState.playlistContent.title,
                     true
                 )
 

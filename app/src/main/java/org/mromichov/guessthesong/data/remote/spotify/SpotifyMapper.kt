@@ -2,7 +2,12 @@ package org.mromichov.guessthesong.data.remote.spotify
 
 import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebEmbedDto
 import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebTrackDto
-import org.mromichov.guessthesong.domain.model.*
+import org.mromichov.guessthesong.domain.model.Track
+import org.mromichov.guessthesong.domain.model.TrackPreview
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistSource
+import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 import javax.inject.Inject
 
 class SpotifyMapper @Inject constructor() {

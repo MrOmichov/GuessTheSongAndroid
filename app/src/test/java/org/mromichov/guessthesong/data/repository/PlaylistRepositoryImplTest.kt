@@ -19,9 +19,9 @@ import org.mromichov.guessthesong.data.remote.spotify.SpotifyPlaylistUrlParser
 import org.mromichov.guessthesong.data.remote.yandex.YandexApi
 import org.mromichov.guessthesong.data.remote.yandex.YandexMapper
 import org.mromichov.guessthesong.data.remote.yandex.YandexPlaylistUrlParser
-import org.mromichov.guessthesong.domain.model.PlaylistContent
-import org.mromichov.guessthesong.domain.model.PlaylistProvider
 import org.mromichov.guessthesong.domain.model.Track
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
 
 class PlaylistRepositoryImplTest {
 

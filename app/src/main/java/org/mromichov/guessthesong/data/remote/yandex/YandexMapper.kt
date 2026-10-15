@@ -3,11 +3,11 @@ package org.mromichov.guessthesong.data.remote.yandex
 import org.mromichov.guessthesong.data.remote.yandex.dto.YandexApiPlaylistResponseDto
 import org.mromichov.guessthesong.data.remote.yandex.dto.YandexTrackDto
 import org.mromichov.guessthesong.data.remote.yandex.dto.YandexWebPlaylistResponseDto
-import org.mromichov.guessthesong.domain.model.PlaylistContent
-import org.mromichov.guessthesong.domain.model.PlaylistProvider
-import org.mromichov.guessthesong.domain.model.PlaylistSource
-import org.mromichov.guessthesong.domain.model.RemotePlaylist
 import org.mromichov.guessthesong.domain.model.Track
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistSource
+import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 import javax.inject.Inject
 
 class YandexMapper @Inject constructor() {
@@ -30,7 +30,7 @@ class YandexMapper @Inject constructor() {
         val tracks = webPlaylist?.tracks.orEmpty().map { toDomain(it) }
 
 
-        val playlistSource = PlaylistSource(PlaylistProvider.YANDEX_MUSIC, "")
+        val playlistSource = PlaylistSource(PlaylistProvider.YANDEX_MUSIC, playlistId)
         val playlistContent = PlaylistContent(
             title = webPlaylist?.title ?: "Yandex Music Playlist",
             tracks = tracks
@@ -48,7 +48,7 @@ class YandexMapper @Inject constructor() {
             .mapNotNull { it.track }
             .map { toDomain(it) }
 
-        val playlistSource = PlaylistSource(PlaylistProvider.YANDEX_MUSIC, "")
+        val playlistSource = PlaylistSource(PlaylistProvider.YANDEX_MUSIC, playlistId)
         val playlistContent = PlaylistContent(
             title = apiPlaylist?.title ?: "Yandex Music Playlist",
             tracks = tracks

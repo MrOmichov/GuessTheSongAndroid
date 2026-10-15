@@ -14,7 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.mromichov.guessthesong.R
-import org.mromichov.guessthesong.domain.model.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
 import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
 import org.mromichov.guessthesong.presentation.sharedcomponent.TopGuessTheSongAppBar
@@ -70,7 +70,7 @@ fun PlaylistsScreen(
 }
 
 @Composable
-private fun PlaylistsContent(viewModel: PlaylistsViewModel, playlists: List<PlaylistContent>) {
+private fun PlaylistsContent(viewModel: PlaylistsViewModel, playlists: List<LocalPlaylist>) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(8.dp),
@@ -82,7 +82,7 @@ private fun PlaylistsContent(viewModel: PlaylistsViewModel, playlists: List<Play
 }
 
 @Composable
-private fun PlaylistCard(playlist: PlaylistContent) {
+private fun PlaylistCard(playlist: LocalPlaylist) {
     Column {
         Box(
             modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant),
@@ -93,6 +93,6 @@ private fun PlaylistCard(playlist: PlaylistContent) {
                 contentDescription = "Playlist ${playlist.id}"
             )
         }
-        Text(playlist.title, style = MaterialTheme.typography.bodyMedium)
+        Text(playlist.content.title, style = MaterialTheme.typography.bodyMedium)
     }
 }

@@ -1,6 +1,8 @@
 package org.mromichov.guessthesong.presentation.startinput
 
-import org.mromichov.guessthesong.domain.model.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 
 sealed class StartInputUiState {
     data class ReadyToPlay(
@@ -12,7 +14,7 @@ sealed class StartInputUiState {
     ) : StartInputUiState()
 
     data class Loaded(
-        val playlist: PlaylistContent
+        val playlistContent: PlaylistContent
     ) : StartInputUiState()
 
     object Idle : StartInputUiState()
@@ -20,8 +22,7 @@ sealed class StartInputUiState {
     data class Error(val message: String) : StartInputUiState()
 
     data class PlaylistAlreadySavedConflict(
-        val savedPlaylistId: Long,
-        val savedPlaylistTitle: String,
-        val savedPlaylist: PlaylistContent,
+        val alreadyExistingPlaylist: LocalPlaylist,
+        val fetchedPlaylist: RemotePlaylist,
     ) : StartInputUiState()
 }

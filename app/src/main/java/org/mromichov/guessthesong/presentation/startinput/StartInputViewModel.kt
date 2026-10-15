@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.mromichov.guessthesong.domain.game.GameConfig
 import org.mromichov.guessthesong.domain.game.GameManager
-import org.mromichov.guessthesong.domain.model.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 import org.mromichov.guessthesong.domain.repository.SettingsRepository
 import javax.inject.Inject
@@ -25,24 +26,24 @@ class StartInputViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     // TODO тоже странная вещь прямо во ViewModel
-    private lateinit var playlist: PlaylistContent
+    private lateinit var playlistContent: PlaylistContent
 
     fun loadPlaylist(url: String) {
         if (!canLoadPlaylist(url)) return
         _uiState.value = StartInputUiState.Loading
         viewModelScope.launch {
             try {
-                val importedPlaylist = playlistRepository.fetchPlaylistByUrl(url).getOrThrow()
-                val savedPlaylist = playlistRepository.findLocalPlaylistByTitle(importedPlaylist.title).getOrThrow()
-                if (savedPlaylist != null) {
+                val fetchedPlaylist = playlistRepository.fetchPlaylistByUrl(url).getOrThrow()
+                val alreadyExistingPlaylist =
+                    playlistRepository.findLocalPlaylistByTitle(fetchedPlaylist.content.title).getOrThrow()
+                if (alreadyExistingPlaylist != null) {
                     _uiState.value = StartInputUiState.PlaylistAlreadySavedConflict(
-                        savedPlaylistId = savedPlaylist.id.toLong(),
-                        savedPlaylistTitle = savedPlaylist.title,
-                        savedPlaylist = importedPlaylist,
+                        alreadyExistingPlaylist = alreadyExistingPlaylist,
+                        fetchedPlaylist = fetchedPlaylist,
                     )
                 } else {
-                    playlist = playlistRepository.savePlaylist(importedPlaylist).getOrThrow()
-                    _uiState.value = StartInputUiState.Loaded(playlist)
+                    playlistContent = playlistRepository.savePlaylist(fetchedPlaylist.content).getOrThrow().content
+                    _uiState.value = StartInputUiState.Loaded(playlistContent)
                 }
             } catch (error: CancellationException) {
                 throw error
@@ -54,18 +55,18 @@ class StartInputViewModel @Inject constructor(
 
     fun prepareGame() {
         if (uiState.value is StartInputUiState.Loaded) {
-            _uiState.value = StartInputUiState.Preparing(playlist)
+            _uiState.value = StartInputUiState.Preparing(playlistContent)
             viewModelScope.launch {
                 try {
                     gameManager.reset()
                     gameManager.prepareRounds(
-                        playlist,
+                        playlistContent,
                         GameConfig(
                             settingsRepository.roundsNumber.first(),
                             settingsRepository.snippetLength.first()
                         )
                     )
-                    _uiState.value = StartInputUiState.ReadyToPlay(playlist)
+                    _uiState.value = StartInputUiState.ReadyToPlay(playlistContent)
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: Exception) {
@@ -88,16 +89,16 @@ class StartInputViewModel @Inject constructor(
         return state is StartInputUiState.Loaded || state is StartInputUiState.Idle || state is StartInputUiState.Error
     }
 
-    fun replacePlaylist(existingPlaylistId: Long, playlist: PlaylistContent) {
+    fun replacePlaylist(existingPlaylistId: Long, playlistContent: PlaylistContent) {
         val state = _uiState.value as? StartInputUiState.PlaylistAlreadySavedConflict ?: return
-        if (state.savedPlaylistId != existingPlaylistId || state.savedPlaylist != playlist) return
-        saveConflictPlaylist { playlistRepository.replacePlaylist(existingPlaylistId, playlist) }
+        if (state.alreadyExistingPlaylist.id != existingPlaylistId || state.fetchedPlaylist.content != playlistContent) return
+        saveConflictPlaylist { playlistRepository.replacePlaylist(existingPlaylistId, playlistContent) }
     }
 
-    fun addPlaylist(playlist: PlaylistContent) {
+    fun addPlaylist(playlistContent: PlaylistContent) {
         val state = _uiState.value as? StartInputUiState.PlaylistAlreadySavedConflict ?: return
-        if (state.savedPlaylist != playlist) return
-        saveConflictPlaylist { playlistRepository.savePlaylist(playlist) }
+        if (state.fetchedPlaylist.content != playlistContent) return
+        saveConflictPlaylist { playlistRepository.savePlaylist(playlistContent) }
     }
 
     fun dismissPlaylistConflict() {
@@ -106,12 +107,12 @@ class StartInputViewModel @Inject constructor(
         }
     }
 
-    private fun saveConflictPlaylist(save: suspend () -> Result<PlaylistContent>) {
+    private fun saveConflictPlaylist(save: suspend () -> Result<LocalPlaylist>) {
         _uiState.value = StartInputUiState.Loading
         viewModelScope.launch {
             try {
-                playlist = save().getOrThrow()
-                _uiState.value = StartInputUiState.Loaded(playlist)
+                playlistContent = save().getOrThrow().content
+                _uiState.value = StartInputUiState.Loaded(playlistContent)
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {

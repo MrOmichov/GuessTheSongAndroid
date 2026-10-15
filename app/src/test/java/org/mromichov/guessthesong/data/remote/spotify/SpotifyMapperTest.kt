@@ -1,21 +1,10 @@
 package org.mromichov.guessthesong.data.remote.spotify
 
 import kotlinx.serialization.json.Json
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import org.junit.Assert.*
 import org.junit.Test
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyAudioPreviewDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyCoverArtDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyDataDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyEntityDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyImageSourceDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyPagePropsDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyPropsDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyStateDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebEmbedDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebTrackDto
-import org.mromichov.guessthesong.domain.model.PlaylistProvider
+import org.mromichov.guessthesong.data.remote.spotify.dto.*
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
 
 class SpotifyMapperTest {
 

@@ -13,10 +13,10 @@ import org.mromichov.guessthesong.data.remote.yandex.YandexApi
 import org.mromichov.guessthesong.data.remote.yandex.YandexMapper
 import org.mromichov.guessthesong.data.remote.yandex.YandexPlaylistTarget
 import org.mromichov.guessthesong.data.remote.yandex.YandexPlaylistUrlParser
-import org.mromichov.guessthesong.domain.model.LocalPlaylist
-import org.mromichov.guessthesong.domain.model.PlaylistContent
-import org.mromichov.guessthesong.domain.model.RemotePlaylist
 import org.mromichov.guessthesong.domain.model.Track
+import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 import javax.inject.Inject
 
@@ -33,18 +33,6 @@ class PlaylistRepositoryImpl @Inject constructor(
     override suspend fun fetchPlaylistByUrl(url: String): Result<RemotePlaylist> {
         return try {
             Result.success(fetchPlaylistByUrlInternal(url))
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (throwable: Throwable) {
-            Result.failure(throwable)
-        }
-    }
-
-    override suspend fun getPlaylistByUrl(url: String): Result<RemotePlaylist> {
-        return try {
-            val playlist = fetchPlaylistByUrlInternal(url)
-            savePlaylist(playlist.content).getOrThrow()
-            Result.success(playlist)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {

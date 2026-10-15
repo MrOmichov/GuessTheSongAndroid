@@ -1,4 +1,4 @@
-package org.mromichov.guessthesong.domain.model
+package org.mromichov.guessthesong.domain.model.playlist
 
 data class PlaylistSource(
     val provider: PlaylistProvider,

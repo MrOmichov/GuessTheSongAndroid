@@ -3,14 +3,8 @@ package org.mromichov.guessthesong.data.remote.yandex
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import org.mromichov.guessthesong.data.remote.yandex.dto.YandexApiPlaylistDto
-import org.mromichov.guessthesong.data.remote.yandex.dto.YandexApiPlaylistResponseDto
-import org.mromichov.guessthesong.data.remote.yandex.dto.YandexApiTrackContainerDto
-import org.mromichov.guessthesong.data.remote.yandex.dto.YandexArtistDto
-import org.mromichov.guessthesong.data.remote.yandex.dto.YandexTrackDto
-import org.mromichov.guessthesong.data.remote.yandex.dto.YandexWebPlaylistDto
-import org.mromichov.guessthesong.data.remote.yandex.dto.YandexWebPlaylistResponseDto
-import org.mromichov.guessthesong.domain.model.PlaylistProvider
+import org.mromichov.guessthesong.data.remote.yandex.dto.*
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
 
 class YandexMapperTest {
 
@@ -112,7 +106,11 @@ class YandexMapperTest {
                 tracks = listOf(
                     YandexApiTrackContainerDto(
                         id = 1,
-                        track = YandexTrackDto(id = "2", title = "Track 2", artists = listOf(YandexArtistDto(name = "Singer B")))
+                        track = YandexTrackDto(
+                            id = "2",
+                            title = "Track 2",
+                            artists = listOf(YandexArtistDto(name = "Singer B"))
+                        )
                     )
                 )
             )

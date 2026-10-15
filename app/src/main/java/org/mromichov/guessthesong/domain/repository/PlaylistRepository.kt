@@ -1,8 +1,8 @@
 package org.mromichov.guessthesong.domain.repository
 
-import org.mromichov.guessthesong.domain.model.LocalPlaylist
-import org.mromichov.guessthesong.domain.model.PlaylistContent
-import org.mromichov.guessthesong.domain.model.RemotePlaylist
+import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 
 interface PlaylistRepository {
     suspend fun fetchPlaylistByUrl(url: String): Result<RemotePlaylist>
