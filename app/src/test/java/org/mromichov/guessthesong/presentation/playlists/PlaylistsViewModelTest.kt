@@ -123,5 +123,20 @@ class PlaylistsViewModelTest {
 
         override suspend fun getSavedPlaylist(id: Long): Result<Playlist> =
             error("Not used by PlaylistsViewModel")
+
+        override suspend fun fetchPlaylistByUrl(url: String): Result<Playlist> =
+            error("Not used by PlaylistsViewModel")
+
+        override suspend fun findSavedPlaylistByTitle(title: String): Result<Playlist?> =
+            error("Not used by PlaylistsViewModel")
+
+        override suspend fun savePlaylist(playlist: Playlist): Result<Playlist> =
+            error("Not used by PlaylistsViewModel")
+
+        override suspend fun replacePlaylist(existingId: Long, playlist: Playlist): Result<Playlist> =
+            error("Not used by PlaylistsViewModel")
+
+        override suspend fun deletePlaylist(id: Long): Result<Unit> =
+            error("Not used by PlaylistsViewModel")
     }
 }

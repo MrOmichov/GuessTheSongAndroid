@@ -28,17 +28,20 @@ class PlaylistRepositoryImpl @Inject constructor(
     private val playlistTracksDao: PlaylistTracksDao,
 ) : PlaylistRepository {
 
+    override suspend fun fetchPlaylistByUrl(url: String): Result<Playlist> {
+        return try {
+            Result.success(fetchPlaylistByUrlInternal(url))
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (throwable: Throwable) {
+            Result.failure(throwable)
+        }
+    }
+
     override suspend fun getPlaylistByUrl(url: String): Result<Playlist> {
         return try {
-            val playlist = fetchPlaylistByUrl(url)
-            playlistTracksDao.insertPlaylistWithTracks(
-                PlaylistWithTracks(
-                    playlist = PlaylistEntity(title = playlist.title),
-                    tracks = playlist.tracks.map { track ->
-                        TrackEntity(title = track.title, artist = track.artist)
-                    },
-                ),
-            )
+            val playlist = fetchPlaylistByUrlInternal(url)
+            savePlaylist(playlist).getOrThrow()
             Result.success(playlist)
         } catch (cancellation: CancellationException) {
             throw cancellation
@@ -57,7 +60,37 @@ class PlaylistRepositoryImpl @Inject constructor(
         toDomain(savedPlaylist)
     }
 
-    private suspend fun fetchPlaylistByUrl(url: String): Playlist {
+    override suspend fun findSavedPlaylistByTitle(title: String): Result<Playlist?> = readSaved {
+        playlistTracksDao.findSavedPlaylistByTitle(title)?.let(::toDomain)
+    }
+
+    override suspend fun savePlaylist(playlist: Playlist): Result<Playlist> = writeSaved {
+        val playlistWithTracks = PlaylistWithTracks(
+            playlist = PlaylistEntity(title = playlist.title),
+            tracks = playlist.tracks.map { track ->
+                TrackEntity(title = track.title, artist = track.artist)
+            },
+        )
+        val generatedId = playlistTracksDao.insertPlaylistWithTracks(playlistWithTracks)
+        playlist.copy(id = generatedId.toString())
+    }
+
+    override suspend fun replacePlaylist(existingId: Long, playlist: Playlist): Result<Playlist> = writeSaved {
+        val playlistWithTracks = PlaylistWithTracks(
+            playlist = PlaylistEntity(id = existingId, title = playlist.title),
+            tracks = playlist.tracks.map { track ->
+                TrackEntity(title = track.title, artist = track.artist)
+            },
+        )
+        playlistTracksDao.replacePlaylistWithTracks(playlistWithTracks)
+        playlist.copy(id = existingId.toString())
+    }
+
+    override suspend fun deletePlaylist(id: Long): Result<Unit> = writeSaved {
+        playlistTracksDao.deletePlaylistWithTracks(id)
+    }
+
+    private suspend fun fetchPlaylistByUrlInternal(url: String): Playlist {
         spotifyUrlParser.parse(url)?.let { target ->
             when (target) {
                 is SpotifyPlaylistTarget.Playlist -> {
@@ -82,9 +115,11 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun <T> readSaved(read: suspend () -> T): Result<T> {
+    private suspend fun <T> readSaved(read: suspend () -> T): Result<T> = writeSaved(read)
+
+    private suspend fun <T> writeSaved(action: suspend () -> T): Result<T> {
         return try {
-            Result.success(read())
+            Result.success(action())
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {

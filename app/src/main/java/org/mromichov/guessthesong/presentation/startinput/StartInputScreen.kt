@@ -18,6 +18,7 @@ import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
 import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
 import org.mromichov.guessthesong.presentation.sharedcomponent.TopGuessTheSongAppBar
 import org.mromichov.guessthesong.presentation.startinput.component.InputUrlContainer
+import org.mromichov.guessthesong.presentation.startinput.component.PlaylistAlreadySavedDialog
 
 @Composable
 fun StartInputScreen(
@@ -93,6 +94,16 @@ fun StartInputContent(
         MenuContent(viewModel, uiState, onOpenPlaylists, urlText)
 
         Spacer(Modifier.padding(16.dp))
+
+        if (uiState is StartInputUiState.PlaylistAlreadySavedConflict) {
+            val state = uiState
+            PlaylistAlreadySavedDialog(
+                state.savedPlaylistTitle,
+                onDismissRequest = viewModel::dismissPlaylistConflict,
+                onReplace = { viewModel.replacePlaylist(state.savedPlaylistId, state.savedPlaylist) },
+                onAdd = { viewModel.addPlaylist(state.savedPlaylist) }
+            )
+        }
 
         if (uiState is StartInputUiState.Error) {
             ErrorContent(uiState)

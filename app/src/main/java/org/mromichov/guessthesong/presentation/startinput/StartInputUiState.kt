@@ -18,4 +18,10 @@ sealed class StartInputUiState {
     object Idle : StartInputUiState()
     object Loading : StartInputUiState()
     data class Error(val message: String) : StartInputUiState()
+
+    data class PlaylistAlreadySavedConflict(
+        val savedPlaylistId: Long,
+        val savedPlaylistTitle: String,
+        val savedPlaylist: Playlist,
+    ) : StartInputUiState()
 }

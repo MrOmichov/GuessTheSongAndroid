@@ -21,11 +21,49 @@ class FakePlaylistTracksDao : PlaylistTracksDao {
 
     override suspend fun insertPlaylistTrackCrossRefs(crossRefs: List<PlaylistTrackCrossRef>) = Unit
 
-    override suspend fun insertPlaylistWithTracks(playlistWithTracks: PlaylistWithTracks) {
+    override suspend fun insertPlaylistWithTracks(playlistWithTracks: PlaylistWithTracks): Long {
         val id = if (playlistWithTracks.playlist.id == 0L) nextPlaylistId++ else playlistWithTracks.playlist.id
         val playlist = playlistWithTracks.playlist.copy(id = id)
         playlistWithTracks.tracks.forEach { track -> tracks[key(track.title, track.artist)] = track }
         playlists[id] = PlaylistWithTracks(playlist, playlistWithTracks.tracks)
+        return id
+    }
+
+    override suspend fun findPlaylistEntityByTitle(title: String): PlaylistEntity? =
+        playlists.values.firstOrNull { it.playlist.title.equals(title, ignoreCase = true) }?.playlist
+
+    override suspend fun deletePlaylistCrossRefs(playlistId: Long) {
+        playlists[playlistId]?.let {
+            playlists[playlistId] = it.copy(tracks = emptyList())
+        }
+    }
+
+    override suspend fun deletePlaylistEntity(id: Long) {
+        playlists.remove(id)
+    }
+
+    override suspend fun updatePlaylistTitle(id: Long, title: String) {
+        playlists[id]?.let {
+            playlists[id] = it.copy(playlist = it.playlist.copy(title = title))
+        }
+    }
+
+    override suspend fun findSavedPlaylistByTitle(title: String): PlaylistWithTracks? =
+        playlists.values.firstOrNull { it.playlist.title.equals(title, ignoreCase = true) }
+
+    override suspend fun replacePlaylistWithTracks(playlistWithTracks: PlaylistWithTracks) {
+        val id = playlistWithTracks.playlist.id
+        playlistWithTracks.tracks.forEach { track ->
+            val trackKey = key(track.title, track.artist)
+            if (!tracks.containsKey(trackKey)) {
+                tracks[trackKey] = track
+            }
+        }
+        playlists[id] = PlaylistWithTracks(playlistWithTracks.playlist, playlistWithTracks.tracks)
+    }
+
+    override suspend fun deletePlaylistWithTracks(id: Long) {
+        playlists.remove(id)
     }
 
     override suspend fun getSavedPlaylists(): List<PlaylistWithTracks> = playlists.values.toList()

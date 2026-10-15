@@ -15,6 +15,7 @@ import org.mromichov.guessthesong.core.database.PlaylistWithTracks
 import org.mromichov.guessthesong.core.database.entity.PlaylistEntity
 import org.mromichov.guessthesong.core.database.entity.TrackEntity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mromichov.guessthesong.data.remote.spotify.SpotifyApi
@@ -23,6 +24,8 @@ import org.mromichov.guessthesong.data.remote.spotify.SpotifyPlaylistUrlParser
 import org.mromichov.guessthesong.data.remote.yandex.YandexApi
 import org.mromichov.guessthesong.data.remote.yandex.YandexMapper
 import org.mromichov.guessthesong.data.remote.yandex.YandexPlaylistUrlParser
+import org.mromichov.guessthesong.domain.model.Playlist
+import org.mromichov.guessthesong.domain.model.Track
 
 class PlaylistRepositoryImplTest {
 
@@ -234,5 +237,130 @@ class PlaylistRepositoryImplTest {
         assertEquals("Saved locally", result.getOrThrow().title)
         assertEquals("Local song", result.getOrThrow().tracks.single().title)
         assertEquals(0, requestCount)
+    }
+
+    @Test
+    fun fetchPlaylistByUrl_doesNotPersistToDao() = runTest {
+        val mockJson = """
+        {
+            "result": {
+                "title": "Remote Only",
+                "tracks": [
+                    {
+                        "track": {
+                            "id": "1",
+                            "title": "Song 1",
+                            "artists": [{ "name": "Artist 1" }]
+                        }
+                    }
+                ]
+            }
+        }
+        """.trimIndent()
+
+        val mockEngine = MockEngine {
+            respond(
+                content = mockJson,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+
+        val dao = FakePlaylistTracksDao()
+        val repository = createRepository(mockEngine, dao = dao)
+        val result = repository.fetchPlaylistByUrl("https://music.yandex.ru/users/test/playlists/100")
+
+        assertTrue(result.isSuccess)
+        assertEquals("Remote Only", result.getOrThrow().title)
+        assertTrue("DAO should remain empty after fetchPlaylistByUrl", dao.getSavedPlaylists().isEmpty())
+    }
+
+    @Test
+    fun findSavedPlaylistByTitle_returnsMatchingSavedPlaylistCaseInsensitively() = runTest {
+        val dao = FakePlaylistTracksDao()
+        dao.insertPlaylistWithTracks(
+            PlaylistWithTracks(
+                playlist = PlaylistEntity(id = 10L, title = "Rock Classics"),
+                tracks = listOf(TrackEntity(title = "Song A", artist = "Band A")),
+            ),
+        )
+        val repository = createRepository(MockEngine { error("No network") }, dao = dao)
+
+        val found = repository.findSavedPlaylistByTitle("rock classics").getOrThrow()
+        val notFound = repository.findSavedPlaylistByTitle("Pop Hits").getOrThrow()
+
+        assertEquals("10", found?.id)
+        assertEquals("Rock Classics", found?.title)
+        assertEquals(1, found?.tracks?.size)
+        assertNull(notFound)
+    }
+
+    @Test
+    fun savePlaylist_persistsPlaylistAndReturnsWithGeneratedId() = runTest {
+        val dao = FakePlaylistTracksDao()
+        val repository = createRepository(MockEngine { error("No network") }, dao = dao)
+
+        val toSave = Playlist(
+            id = "temporary-id",
+            title = "My Custom Playlist",
+            tracks = listOf(Track("Song X", "Artist X", null, 0L))
+        )
+        val result = repository.savePlaylist(toSave)
+
+        assertTrue(result.isSuccess)
+        val saved = result.getOrThrow()
+        assertEquals("My Custom Playlist", saved.title)
+        assertEquals("1", saved.id)
+        val fromDb = dao.getSavedPlaylist(1L)
+        assertEquals("My Custom Playlist", fromDb?.playlist?.title)
+        assertEquals("Song X", fromDb?.tracks?.single()?.title)
+    }
+
+    @Test
+    fun replacePlaylist_updatesTracksForExistingId() = runTest {
+        val dao = FakePlaylistTracksDao()
+        dao.insertPlaylistWithTracks(
+            PlaylistWithTracks(
+                playlist = PlaylistEntity(id = 5L, title = "Old Playlist"),
+                tracks = listOf(TrackEntity(title = "Old Song", artist = "Old Artist")),
+            ),
+        )
+        val repository = createRepository(MockEngine { error("No network") }, dao = dao)
+
+        val updatedPlaylist = Playlist(
+            id = "ignored",
+            title = "New Playlist Name",
+            tracks = listOf(
+                Track("New Song 1", "Artist 1", null, 0L),
+                Track("New Song 2", "Artist 2", null, 0L)
+            )
+        )
+        val result = repository.replacePlaylist(5L, updatedPlaylist)
+
+        assertTrue(result.isSuccess)
+        assertEquals("5", result.getOrThrow().id)
+        assertEquals("New Playlist Name", result.getOrThrow().title)
+        val fromDb = dao.getSavedPlaylist(5L)
+        assertEquals("New Playlist Name", fromDb?.playlist?.title)
+        assertEquals(2, fromDb?.tracks?.size)
+        assertEquals("New Song 1", fromDb?.tracks?.first()?.title)
+    }
+
+    @Test
+    fun deletePlaylist_removesPlaylistFromDao() = runTest {
+        val dao = FakePlaylistTracksDao()
+        dao.insertPlaylistWithTracks(
+            PlaylistWithTracks(
+                playlist = PlaylistEntity(id = 7L, title = "To Delete"),
+                tracks = listOf(TrackEntity(title = "Song", artist = "Artist")),
+            ),
+        )
+        val repository = createRepository(MockEngine { error("No network") }, dao = dao)
+
+        val result = repository.deletePlaylist(7L)
+
+        assertTrue(result.isSuccess)
+        assertNull(dao.getSavedPlaylist(7L))
+        assertTrue(dao.getSavedPlaylists().isEmpty())
     }
 }
