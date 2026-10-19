@@ -38,7 +38,7 @@ fun InputUrlContainer(
                 value = urlText,
                 onValueChange = onValueChange,
                 singleLine = true,
-                isError = uiState is StartInputUiState.Error,
+                isError = uiState is StartInputUiState.ImportError,
             )
         }
     }

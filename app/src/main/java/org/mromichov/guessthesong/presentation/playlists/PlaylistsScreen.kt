@@ -1,6 +1,7 @@
 package org.mromichov.guessthesong.presentation.playlists
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -11,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -30,7 +32,9 @@ import org.mromichov.guessthesong.presentation.sharedcomponent.TopGuessTheSongAp
 @Composable
 fun PlaylistsScreen(
     viewModel: PlaylistsViewModel,
-    back: () -> Unit
+    back: () -> Unit,
+    onPlaylistSelected: (Long) -> Unit,
+    onEmptyListImport: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -62,15 +66,26 @@ fun PlaylistsScreen(
                 ) { CircularProgressIndicator() }
 
                 is PlaylistsUiState.Loaded -> PlaylistsContent(
-                    viewModel,
-                    playlists = (uiState as PlaylistsUiState.Loaded).playlists
+                    playlists = (uiState as PlaylistsUiState.Loaded).playlists,
+                    onPlaylistSelected = onPlaylistSelected,
                 )
 
                 PlaylistsUiState.LoadedEmpty -> Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Скоро тут появятся плейлисты", style = MaterialTheme.typography.bodyMedium)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                    ) {
+                        Text("Сохранённых плейлистов пока нет", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(Modifier.height(16.dp))
+                        AppButton(
+                            icon = painterResource(R.drawable.download),
+                            text = "Загрузить плейлист",
+                            onClick = onEmptyListImport,
+                        )
+                    }
                 }
             }
         }
@@ -78,19 +93,25 @@ fun PlaylistsScreen(
 }
 
 @Composable
-private fun PlaylistsContent(viewModel: PlaylistsViewModel, playlists: List<LocalPlaylist>) {
+private fun PlaylistsContent(
+    playlists: List<LocalPlaylist>,
+    onPlaylistSelected: (Long) -> Unit,
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(8.dp),
     ) {
-        items(playlists) { playlist ->
-            PlaylistCard(playlist)
+        items(
+            items = playlists,
+            key = { playlist -> playlist.id },
+        ) { playlist ->
+            PlaylistCard(playlist) { onPlaylistSelected(playlist.id) }
         }
     }
 }
 
 @Composable
-internal fun PlaylistCard(playlist: LocalPlaylist) {
+internal fun PlaylistCard(playlist: LocalPlaylist, onClick: () -> Unit = {}) {
     val context = LocalContext.current
     val coverFile = remember(playlist.coverFileName, context.filesDir) {
         playlist.coverFileName
@@ -98,7 +119,11 @@ internal fun PlaylistCard(playlist: LocalPlaylist) {
             ?.let { File(File(context.filesDir, "playlist-covers"), it) }
     }
 
-    Box {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick),
+    ) {
         Column {
             AsyncImage(
                 model = coverFile,
