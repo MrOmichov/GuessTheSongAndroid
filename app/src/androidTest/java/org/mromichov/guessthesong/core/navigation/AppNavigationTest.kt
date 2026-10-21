@@ -32,7 +32,10 @@ import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 import org.mromichov.guessthesong.domain.player.AudioPlayer
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 import org.mromichov.guessthesong.domain.repository.SettingsRepository
+import org.mromichov.guessthesong.domain.repository.TrackArtworkRepository
 import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
+import org.mromichov.guessthesong.presentation.game.artwork.PrepareTrackCover
+import org.mromichov.guessthesong.presentation.game.artwork.TrackCoverLoader
 import org.mromichov.guessthesong.presentation.game.GameViewModel
 import org.mromichov.guessthesong.presentation.playlists.PlaylistsViewModel
 import org.mromichov.guessthesong.presentation.settings.SettingsViewModel
@@ -128,7 +131,11 @@ class AppNavigationTest {
             val viewModel: ViewModel = when (modelClass) {
                 StartInputViewModel::class.java -> startInputViewModel
                 PlaylistsViewModel::class.java -> playlistsViewModelFactory()
-                GameViewModel::class.java -> GameViewModel(gameManager, audioPlayer)
+                GameViewModel::class.java -> GameViewModel(
+                    gameManager,
+                    audioPlayer,
+                    PrepareTrackCover(TrackArtworkRepository { null }, TrackCoverLoader { null }),
+                )
                 SettingsViewModel::class.java -> SettingsViewModel(settings)
                 else -> throw IllegalArgumentException("No test ViewModel for ${modelClass.name}")
             }

@@ -5,6 +5,8 @@ import dagger.Module
 import org.mromichov.guessthesong.data.repository.PlaylistRepositoryImpl
 import org.mromichov.guessthesong.data.repository.SettingsRepositoryImpl
 import org.mromichov.guessthesong.data.repository.TrackPreviewRepositoryImpl
+import org.mromichov.guessthesong.data.repository.ItunesTrackArtworkRepository
+import org.mromichov.guessthesong.domain.repository.TrackArtworkRepository
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 import org.mromichov.guessthesong.domain.repository.SettingsRepository
 import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
@@ -12,6 +14,11 @@ import javax.inject.Singleton
 
 @Module
 abstract class RepositoryModule {
+
+    @Binds
+    abstract fun bindTrackArtworkRepository(
+        impl: ItunesTrackArtworkRepository,
+    ): TrackArtworkRepository
 
     @Binds
     @Singleton

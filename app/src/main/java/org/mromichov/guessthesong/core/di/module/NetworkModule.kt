@@ -3,6 +3,9 @@ package org.mromichov.guessthesong.core.di.module
 import dagger.Module
 import dagger.Provides
 import android.content.Context
+import coil3.ImageLoader
+import org.mromichov.guessthesong.presentation.game.artwork.CoilTrackCoverLoader
+import org.mromichov.guessthesong.presentation.game.artwork.TrackCoverLoader
 import android.graphics.BitmapFactory
 import java.io.File
 import org.mromichov.guessthesong.data.local.FilePlaylistCoverStorage
@@ -14,6 +17,15 @@ import javax.inject.Singleton
 
 @Module
 class NetworkModule {
+    @Provides
+    @Singleton
+    fun provideTrackCoverLoader(context: Context): TrackCoverLoader =
+        CoilTrackCoverLoader(
+            context.applicationContext,
+            HttpClient(OkHttp),
+            ImageLoader.Builder(context.applicationContext).diskCache(null).build(),
+        )
+
     @Provides
     @Singleton
     fun providePlaylistCoverStorage(context: Context): PlaylistCoverStorage =
