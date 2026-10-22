@@ -6,6 +6,7 @@ import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mromichov.guessthesong.domain.model.Track
@@ -36,7 +37,7 @@ class PlaylistsViewModelTest {
             LocalPlaylist(1L, PlaylistContent("Favorites", listOf(Track("Song A", "Artist A", null, 120_000L)))),
             LocalPlaylist(2L, PlaylistContent("Road trip", emptyList())),
         )
-        val repository = FakePlaylistRepository { Result.success(playlists) }
+        val repository = FakePlaylistRepository(savedPlaylists = { Result.success(playlists) })
         val viewModel = PlaylistsViewModel(repository)
 
         advanceUntilIdle()
@@ -47,7 +48,7 @@ class PlaylistsViewModelTest {
 
     @Test
     fun `empty saved playlists expose loaded empty state`() = runTest(mainDispatcher.scheduler) {
-        val repository = FakePlaylistRepository { Result.success(emptyList()) }
+        val repository = FakePlaylistRepository(savedPlaylists = { Result.success(emptyList()) })
         val viewModel = PlaylistsViewModel(repository)
 
         advanceUntilIdle()
@@ -62,10 +63,10 @@ class PlaylistsViewModelTest {
             val retryResult = CompletableDeferred<Result<List<LocalPlaylist>>>()
             var attempt = 0
             val playlists = listOf(LocalPlaylist(1L, PlaylistContent("Favorites", emptyList())))
-            val repository = FakePlaylistRepository {
+            val repository = FakePlaylistRepository(savedPlaylists = {
                 if (attempt++ == 0) Result.failure(IllegalStateException("Database unavailable"))
                 else retryResult.await()
-            }
+            })
             val viewModel = PlaylistsViewModel(repository)
 
             runCurrent()
@@ -88,7 +89,7 @@ class PlaylistsViewModelTest {
     fun `second load while initial request is pending does not call repository again`() =
         runTest(mainDispatcher.scheduler) {
             val pendingResult = CompletableDeferred<Result<List<LocalPlaylist>>>()
-            val repository = FakePlaylistRepository { pendingResult.await() }
+            val repository = FakePlaylistRepository(savedPlaylists = { pendingResult.await() })
             val viewModel = PlaylistsViewModel(repository)
 
             runCurrent()
@@ -104,11 +105,81 @@ class PlaylistsViewModelTest {
             }
         }
 
+    @Test
+    fun `confirmed deletion calls repository and refreshes playlists`() =
+        runTest(mainDispatcher.scheduler) {
+            val playlistToDelete = LocalPlaylist(1L, PlaylistContent("Favorites", emptyList()))
+            val remainingPlaylist = LocalPlaylist(2L, PlaylistContent("Road trip", emptyList()))
+            var savedPlaylists = listOf(playlistToDelete, remainingPlaylist)
+            val repository = FakePlaylistRepository(
+                savedPlaylists = { Result.success(savedPlaylists) },
+                deleteResult = { id ->
+                    savedPlaylists = savedPlaylists.filterNot { it.id == id }
+                    Result.success(Unit)
+                },
+            )
+            val viewModel = PlaylistsViewModel(repository)
+
+            advanceUntilIdle()
+            viewModel.showDeleteDialog(playlistToDelete.id, savedPlaylists)
+            assertEquals(
+                PlaylistsUiState.DeletePlaylistIntent(playlistToDelete.id, savedPlaylists),
+                viewModel.uiState.value,
+            )
+
+            viewModel.deletePlaylist(playlistToDelete.id)
+            advanceUntilIdle()
+
+            assertEquals(listOf(playlistToDelete.id), repository.deletedPlaylistIds)
+            assertEquals(PlaylistsUiState.Loaded(listOf(remainingPlaylist)), viewModel.uiState.value)
+            assertEquals(2, repository.savedPlaylistRequests)
+        }
+
+    @Test
+    fun `dismissing deletion dialog restores loaded playlists`() = runTest(mainDispatcher.scheduler) {
+        val playlists = listOf(LocalPlaylist(1L, PlaylistContent("Favorites", emptyList())))
+        val repository = FakePlaylistRepository(savedPlaylists = { Result.success(playlists) })
+        val viewModel = PlaylistsViewModel(repository)
+
+        advanceUntilIdle()
+        viewModel.showDeleteDialog(playlists.single().id, playlists)
+        viewModel.backToLoaded(playlists)
+
+        assertEquals(PlaylistsUiState.Loaded(playlists), viewModel.uiState.value)
+        assertTrue(repository.deletedPlaylistIds.isEmpty())
+    }
+
+    @Test
+    fun `failed deletion keeps dialog open and exposes snackbar state`() =
+        runTest(mainDispatcher.scheduler) {
+            val playlists = listOf(LocalPlaylist(1L, PlaylistContent("Favorites", emptyList())))
+            val repository = FakePlaylistRepository(
+                savedPlaylists = { Result.success(playlists) },
+                deleteResult = { Result.failure(IllegalStateException("Database unavailable")) },
+            )
+            val viewModel = PlaylistsViewModel(repository)
+
+            advanceUntilIdle()
+            viewModel.showDeleteDialog(playlists.single().id, playlists)
+            viewModel.deletePlaylist(playlists.single().id)
+            advanceUntilIdle()
+
+            assertEquals(listOf(playlists.single().id), repository.deletedPlaylistIds)
+            assertEquals(
+                PlaylistsUiState.DeletePlaylistIntent(playlists.single().id, playlists),
+                viewModel.uiState.value,
+            )
+            assertTrue(viewModel.showDeleteErrorSnackbar)
+            assertEquals(1, repository.savedPlaylistRequests)
+        }
+
     private class FakePlaylistRepository(
         private val savedPlaylists: suspend () -> Result<List<LocalPlaylist>>,
+        private val deleteResult: suspend (Long) -> Result<Unit> = { Result.success(Unit) },
     ) : PlaylistRepository {
         var savedPlaylistRequests: Int = 0
             private set
+        val deletedPlaylistIds = mutableListOf<Long>()
 
         override suspend fun getLocalPlaylists(): Result<List<LocalPlaylist>> {
             savedPlaylistRequests++
@@ -124,13 +195,15 @@ class PlaylistsViewModelTest {
         override suspend fun findLocalPlaylistByTitle(title: String): Result<LocalPlaylist?> =
             error("Not used by PlaylistsViewModel")
 
-        override suspend fun savePlaylist(playlist: PlaylistContent, provider: PlaylistProvider?): Result<LocalPlaylist> =
+        override suspend fun savePlaylist(playlistContent: PlaylistContent, provider: PlaylistProvider?): Result<LocalPlaylist> =
             error("Not used by PlaylistsViewModel")
 
-        override suspend fun replacePlaylist(existingId: Long, playlist: PlaylistContent, provider: PlaylistProvider?): Result<LocalPlaylist> =
+        override suspend fun replacePlaylist(existingId: Long, playlistContent: PlaylistContent, provider: PlaylistProvider?): Result<LocalPlaylist> =
             error("Not used by PlaylistsViewModel")
 
-        override suspend fun deletePlaylist(id: Long): Result<Unit> =
-            error("Not used by PlaylistsViewModel")
+        override suspend fun deletePlaylist(id: Long): Result<Unit> {
+            deletedPlaylistIds += id
+            return deleteResult(id)
+        }
     }
 }
