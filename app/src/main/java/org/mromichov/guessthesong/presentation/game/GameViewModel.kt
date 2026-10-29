@@ -1,5 +1,6 @@
 package org.mromichov.guessthesong.presentation.game
 
+import android.annotation.SuppressLint
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineStart
@@ -9,8 +10,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.mromichov.guessthesong.core.AppConsts
 import org.mromichov.guessthesong.domain.game.GameManager
-import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.model.GameRound
+import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.player.AudioPlayer
 import org.mromichov.guessthesong.presentation.game.artwork.PrepareTrackCover
 import javax.inject.Inject
@@ -30,8 +31,11 @@ class GameViewModel @Inject constructor(
     val currentMs: StateFlow<Long> = audioPlayer.currentMs
     val durationMs: StateFlow<Long> = audioPlayer.durationMs
 
-    init { startRoundOrGameOver() }
+    init {
+        startRoundOrGameOver()
+    }
 
+    // TODO UB рефакторинг!!!
     fun startRoundOrGameOver() {
         if (roundJob?.isActive == true || _uiState.value is GameUiState.Guessing) return
         val index = currentRoundIndex
@@ -87,6 +91,7 @@ class GameViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("EmptySuperCall")
     override fun onCleared() {
         roundJob?.cancel()
         _uiState.value = GameUiState.GameOver(score)

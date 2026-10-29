@@ -4,12 +4,15 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
@@ -126,11 +129,14 @@ class StartInputScreenTest {
         val repository = FakePlaylistRepository(fetch = { pendingFetch.await() })
         showScreen(repository)
         openImportAndEnterUrl()
+        composeRule.onNode(indeterminateProgressBar()).assertDoesNotExist()
         composeRule.onNodeWithText("Загрузить").performClick()
         waitForState { screenStateIs<StartInputUiState.Importing>() }
+        composeRule.onNode(indeterminateProgressBar()).assertIsDisplayed()
 
         pressBack()
         waitForState { screenStateIs<StartInputUiState.Menu>() }
+        composeRule.onNode(indeterminateProgressBar()).assertDoesNotExist()
         pendingFetch.complete(Result.success(remotePlaylist(content)))
         composeRule.waitForIdle()
 
@@ -164,10 +170,10 @@ class StartInputScreenTest {
 
         try {
             composeRule.waitUntil(timeoutMillis = 5_000) {
-                composeRule.onAllNodesWithText("Подготавливаем игру…")
+                composeRule.onAllNodesWithText("Подготавливаем игру… 0% (0/1)")
                     .fetchSemanticsNodes().isNotEmpty()
             }
-            composeRule.onNodeWithText("Подготавливаем игру…").assertIsDisplayed()
+            composeRule.onNodeWithText("Подготавливаем игру… 0% (0/1)").assertIsDisplayed()
             pressBack()
             composeRule.onNodeWithText("Preparing mix").assertIsDisplayed()
             composeRule.onNodeWithText("Завершаем отмену…").assertIsDisplayed()
@@ -240,6 +246,11 @@ class StartInputScreenTest {
         }
         composeRule.waitForIdle()
     }
+
+    private fun indeterminateProgressBar() = SemanticsMatcher.expectValue(
+        SemanticsProperties.ProgressBarRangeInfo,
+        ProgressBarRangeInfo.Indeterminate,
+    )
 
     private inline fun <reified T : StartInputUiState> screenStateIs(): Boolean =
         currentViewModelState is T

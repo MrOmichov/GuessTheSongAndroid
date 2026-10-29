@@ -132,6 +132,8 @@ fun StartInputContent(
                 playlistTitle = uiState.playlist.title,
                 showError = null,
                 preparing = true,
+                completed = uiState.completed,
+                total = uiState.total,
             )
 
             is StartInputUiState.CancellingPreparation -> SelectedPlaylistContent(
@@ -191,6 +193,10 @@ private fun ImportContent(
     onUrlChange: (String) -> Unit,
 ) {
     InputUrlContainer(urlText, onUrlChange, state)
+    if (state == StartInputUiState.Importing) {
+        Spacer(Modifier.height(12.dp))
+        LinearProgressIndicator(modifier = Modifier.width(300.dp))
+    }
     if (state is StartInputUiState.ImportError) {
         Spacer(Modifier.height(12.dp))
         ErrorContent(state.message)
@@ -217,6 +223,8 @@ private fun SelectedPlaylistContent(
     showError: String?,
     preparing: Boolean,
     cancellationPending: Boolean = false,
+    completed: Int = 0,
+    total: Int = 0,
 ) {
     Text(
         text = playlistTitle,
@@ -230,9 +238,15 @@ private fun SelectedPlaylistContent(
     }
     if (preparing) {
         Spacer(Modifier.height(16.dp))
-        OperationProgressContent(
-            label = if (cancellationPending) "Завершаем отмену…" else "Подготавливаем игру…",
-        )
+        if (!cancellationPending && total > 0) {
+            LinearProgressIndicator(progress = { completed.toFloat() / total }, modifier = Modifier.width(300.dp))
+            Spacer(Modifier.height(12.dp))
+            Text("Подготавливаем игру… ${completed * 100 / total}% ($completed/$total)")
+        } else {
+            OperationProgressContent(
+                label = if (cancellationPending) "Завершаем отмену…" else "Подготавливаем игру…",
+            )
+        }
     }
     Spacer(Modifier.height(16.dp))
     AppButton(

@@ -20,7 +20,7 @@ sealed class StartInputUiState {
     data class SelectionError(val message: String) : StartInputUiState()
 
     data class Selected(val playlist: PlaylistContent) : StartInputUiState()
-    data class Preparing(val playlist: PlaylistContent) : StartInputUiState()
+    data class Preparing(val playlist: PlaylistContent, val completed: Int = 0, val total: Int = 0) : StartInputUiState()
     data class CancellingPreparation(val playlist: PlaylistContent) : StartInputUiState()
     data class PreparationError(
         val message: String,

@@ -55,11 +55,12 @@ class GameManager @Inject constructor(
         currentRoundIndex++
     }
 
-    suspend fun prepareRounds(playlist: PlaylistContent, config: GameConfig) {
+    suspend fun prepareRounds(playlist: PlaylistContent, config: GameConfig, onProgress: (Int, Int) -> Unit = { _, _ -> }) {
         validateConfig(config)
         this.config = config
         val uniqueShuffledTracks = validatePlaylistAndGetUniqueTracks(playlist).shuffled()
         val alreadySelected = mutableSetOf<Track>()
+        onProgress(0, config.roundsNumber)
 
         for (answerTrack in uniqueShuffledTracks) {
             if (rounds.size == config.roundsNumber) break
@@ -67,7 +68,10 @@ class GameManager @Inject constructor(
 
             alreadySelected.add(answerTrack)
             prepareOneRound(answerTrack, uniqueShuffledTracks)
-                .onSuccess { rounds.add(it) }
+                .onSuccess {
+                    rounds.add(it)
+                    onProgress(rounds.size, config.roundsNumber)
+                }
                 .onFailure { error ->
                     if (error is TrackPreviewNotFoundException) continue
                     else throw error

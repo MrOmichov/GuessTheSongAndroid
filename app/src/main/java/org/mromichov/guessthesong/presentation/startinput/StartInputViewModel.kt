@@ -105,7 +105,12 @@ class StartInputViewModel @Inject constructor(
                 settingsRepository.roundsNumber.first(),
                 settingsRepository.snippetLength.first(),
             )
-            gameManager.prepareRounds(playlist, config)
+            val operationContext = currentCoroutineContext()
+            gameManager.prepareRounds(playlist, config) { completed, total ->
+                if (request == requestVersion && operationContext.isActive) {
+                    _uiState.value = StartInputUiState.Preparing(playlist, completed, total)
+                }
+            }
             publish(request, StartInputUiState.ReadyToPlay(playlist))
         }
     }

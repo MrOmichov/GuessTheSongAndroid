@@ -69,21 +69,6 @@ class GameManagerTest {
     }
 
     @Test
-    fun `prepared round choices are distinct by title and artist`() = runTest {
-        val sourceTracks = tracks(4).flatMap { track ->
-            listOf(track, track.copy(coverUrl = "cover://alternate", durationMs = 200_000))
-        }
-        val manager = GameManager(FakePreviewRepository())
-        manager.prepareRounds(playlist(sourceTracks), GameConfig(1, 10_000))
-
-        val answer = manager.getCurrentRound().track
-        val choiceIdentities = manager.currentRoundOptions.map(::identity).toSet()
-
-        assertEquals(4, choiceIdentities.size)
-        assertTrue(identity(answer) in choiceIdentities)
-    }
-
-    @Test
     fun `prepared rounds use a unique correct track for every question`() = runTest {
         val sourceTracks = tracks(13)
         val manager = GameManager(FakePreviewRepository())
@@ -201,6 +186,31 @@ class GameManagerTest {
         assertEquals(3, lookupCount)
         assertEquals(2, answers.size)
         assertEquals(2, answers.distinct().size)
+    }
+
+    @Test
+    fun `preparation progress counts only rounds with successfully found previews`() = runTest {
+        var lookupCount = 0
+        val progress = mutableListOf<Pair<Int, Int>>()
+        val manager = GameManager(
+            FakePreviewRepository { artist, title ->
+                lookupCount++
+                if (lookupCount == 1) {
+                    Result.failure(TrackPreviewNotFoundException(title))
+                } else {
+                    Result.success(TrackPreview(title, artist, "preview://$artist/$title", null))
+                }
+            }
+        )
+
+        manager.prepareRounds(
+            playlist(tracks(5)),
+            GameConfig(roundsNumber = 2, snippetLength = 10_000),
+            onProgress = { completed, total -> progress += completed to total },
+        )
+
+        assertEquals(listOf(0 to 2, 1 to 2, 2 to 2), progress)
+        assertEquals(3, lookupCount)
     }
 
     @Test

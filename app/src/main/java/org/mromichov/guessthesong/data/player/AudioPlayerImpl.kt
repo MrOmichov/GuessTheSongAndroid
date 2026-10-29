@@ -51,7 +51,7 @@ class AudioPlayerImpl @Inject constructor(
         progressJob = scope.launch {
             while (true) {
                 _currentMs.value = player.currentPosition
-                delay(50.milliseconds)
+                delay(16.milliseconds)
             }
         }
     }

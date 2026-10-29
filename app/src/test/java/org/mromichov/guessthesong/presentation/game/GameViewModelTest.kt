@@ -176,6 +176,27 @@ class GameViewModelTest {
     }
 
     @Test
+    fun `last answer transitions to game over with final score without replaying audio`() = runTest(dispatcher.scheduler) {
+        val harness = harness(rounds = 2)
+        val viewModel = harness.viewModel()
+        advanceUntilIdle()
+
+        viewModel.checkAnswer(harness.manager.getCurrentRound().track)
+        viewModel.startRoundOrGameOver()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value is GameUiState.Guessing)
+        assertEquals(2, harness.player.playUrls.size)
+
+        val secondRound = harness.manager.getCurrentRound()
+        val wrongAnswer = secondRound.wrongOptions.first()
+        viewModel.checkAnswer(wrongAnswer)
+        viewModel.startRoundOrGameOver()
+
+        assertEquals(GameUiState.GameOver(score = 1), viewModel.uiState.value)
+        assertEquals(2, harness.player.playUrls.size)
+    }
+
+    @Test
     fun `replacement round during cover load prevents stale audio playback`() = runTest(dispatcher.scheduler) {
         val harness = harness(rounds = 1)
         val loaderStarted = CompletableDeferred<Unit>()
