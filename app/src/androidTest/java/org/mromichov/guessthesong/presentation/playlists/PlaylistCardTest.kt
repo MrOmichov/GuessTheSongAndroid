@@ -36,7 +36,7 @@ class PlaylistCardTest {
                 provider = PlaylistProvider.SPOTIFY,
             ),
         )
-        composeRule.setContent { MaterialTheme { PlaylistCard(playlist.value) } }
+        composeRule.setContent { MaterialTheme { PlaylistCard(playlist.value, onClick = {}, onLongClick = {}) } }
 
         composeRule.onNodeWithText("Favorites").assertExists()
         composeRule.onNodeWithContentDescription("Обложка плейлиста Favorites").assertExists()
@@ -64,6 +64,8 @@ class PlaylistCardTest {
                     coverFileName = "missing-cover.jpg",
                     provider = PlaylistProvider.YANDEX_MUSIC,
                 ),
+                onClick = {},
+                onLongClick = {},
             )
         } }
 
@@ -82,6 +84,8 @@ class PlaylistCardTest {
                         content = PlaylistContent(title, emptyList()),
                         provider = PlaylistProvider.SPOTIFY,
                     ),
+                    onClick = {},
+                    onLongClick = {},
                 )
             }
         }
@@ -117,7 +121,7 @@ class PlaylistCardTest {
         )
 
         try {
-            composeRule.setContent { MaterialTheme { PlaylistCard(playlist.value) } }
+            composeRule.setContent { MaterialTheme { PlaylistCard(playlist.value, onClick = {}, onLongClick = {}) } }
 
             composeRule.waitUntil(5_000) {
                 val pixels = composeRule.onNodeWithContentDescription(
