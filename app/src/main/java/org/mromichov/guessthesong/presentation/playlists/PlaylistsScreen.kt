@@ -2,14 +2,17 @@ package org.mromichov.guessthesong.presentation.playlists
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -21,10 +24,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.launch
 import java.io.File
 import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
+import org.mromichov.guessthesong.presentation.sharedcomponent.AppAlertDialog
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
 import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
 import org.mromichov.guessthesong.presentation.sharedcomponent.TopGuessTheSongAppBar
@@ -37,17 +42,50 @@ fun PlaylistsScreen(
     onEmptyListImport: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(viewModel.showDeleteErrorSnackbar) {
+        if (viewModel.showDeleteErrorSnackbar) {
+            scope.launch {
+                snackbarHostState.showSnackbar("Не удалось удалить плейлист")
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
             TopGuessTheSongAppBar(
                 back = back,
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier.padding(innerPadding)
         ) {
+            if (uiState is PlaylistsUiState.DeletePlaylistIntent) {
+                val state = uiState as PlaylistsUiState.DeletePlaylistIntent
+                AppAlertDialog(
+                    dialogTitle = "Вы хотите удалить этот плейлист?",
+                    dialogText = "",
+                    onDismissRequest = { viewModel.backToLoaded(state.playlistsLoaded) },
+                    dismissButton = { AppButton(
+                        icon = painterResource(R.drawable.arrow_back),
+                        onClick = { viewModel.backToLoaded(state.playlistsLoaded) },
+                        text = "Отмена"
+                    ) },
+                    confirmButton = { AppButton(
+                        icon = painterResource(R.drawable.delete),
+                        onClick = { viewModel.deletePlaylist(state.id) },
+                        text = "Да"
+                    ) },
+                    icon = painterResource(R.drawable.delete),
+                )
+            }
+
             when (uiState) {
                 is PlaylistsUiState.Error -> {
                     ErrorContainer {
@@ -68,6 +106,13 @@ fun PlaylistsScreen(
                 is PlaylistsUiState.Loaded -> PlaylistsContent(
                     playlists = (uiState as PlaylistsUiState.Loaded).playlists,
                     onPlaylistSelected = onPlaylistSelected,
+                    onLongPlaylistClick = { id -> viewModel.showDeleteDialog(id, (uiState as PlaylistsUiState.Loaded).playlists) }
+                )
+
+                is PlaylistsUiState.DeletePlaylistIntent -> PlaylistsContent(
+                    playlists = (uiState as PlaylistsUiState.DeletePlaylistIntent).playlistsLoaded,
+                    onPlaylistSelected = {},
+                    onLongPlaylistClick = {}
                 )
 
                 PlaylistsUiState.LoadedEmpty -> Box(
@@ -96,6 +141,7 @@ fun PlaylistsScreen(
 private fun PlaylistsContent(
     playlists: List<LocalPlaylist>,
     onPlaylistSelected: (Long) -> Unit,
+    onLongPlaylistClick: (Long) -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -105,13 +151,13 @@ private fun PlaylistsContent(
             items = playlists,
             key = { playlist -> playlist.id },
         ) { playlist ->
-            PlaylistCard(playlist) { onPlaylistSelected(playlist.id) }
+            PlaylistCard(playlist = playlist, onClick = { onPlaylistSelected(playlist.id) }, onLongClick = { onLongPlaylistClick(playlist.id) })
         }
     }
 }
 
 @Composable
-internal fun PlaylistCard(playlist: LocalPlaylist, onClick: () -> Unit = {}) {
+internal fun PlaylistCard(playlist: LocalPlaylist, onClick: () -> Unit, onLongClick: () -> Unit) {
     val context = LocalContext.current
     val coverFile = remember(playlist.coverFileName, context.filesDir) {
         playlist.coverFileName
@@ -122,7 +168,7 @@ internal fun PlaylistCard(playlist: LocalPlaylist, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick),
+            .combinedClickable(role = Role.Button, onClick = onClick, onLongClick = onLongClick),
     ) {
         Column {
             AsyncImage(
