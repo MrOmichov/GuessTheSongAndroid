@@ -12,6 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
@@ -55,11 +56,11 @@ class PlaylistsScreenTest {
         var importCalls = 0
         showScreen(viewModel, onEmptyImport = { importCalls++ })
 
-        composeRule.onNodeWithText("Сохранённых плейлистов пока нет").assertIsDisplayed()
-        composeRule.onNodeWithText("Загрузить плейлист").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.empty_playlists)).assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.import_playlist)).performClick()
 
         composeRule.runOnIdle { assertEquals(1, importCalls) }
-        composeRule.onNodeWithText("Перезагрузить").assertDoesNotExist()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.reload)).assertDoesNotExist()
     }
 
     @Test
@@ -76,8 +77,8 @@ class PlaylistsScreenTest {
         val viewModel = PlaylistsViewModel(repository)
         showScreen(viewModel)
 
-        composeRule.onNodeWithText("storage unavailable").assertIsDisplayed()
-        composeRule.onNodeWithText("Перезагрузить").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.error_load_library)).assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.reload)).performClick()
         composeRule.onNodeWithText("Recovered playlist").assertIsDisplayed()
 
         composeRule.runOnIdle { assertEquals(2, calls) }

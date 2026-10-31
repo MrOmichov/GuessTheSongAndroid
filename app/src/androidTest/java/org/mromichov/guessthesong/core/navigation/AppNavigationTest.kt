@@ -20,6 +20,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.core.di.LocalViewModelProvider
 import org.mromichov.guessthesong.core.theme.GuessTheSongTheme
 import org.mromichov.guessthesong.domain.game.GameManager
@@ -64,20 +65,20 @@ class AppNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("Сохранённые плейлисты").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.saved_playlists)).performClick()
         composeRule.onNodeWithText("Saved local mix").assertIsDisplayed()
         composeRule.onNodeWithText("Saved local mix").performClick()
         waitForUiState<StartInputUiState.Selected>()
 
         composeRule.onNodeWithText("Saved local mix").assertIsDisplayed()
-        composeRule.onNodeWithText("Начать игру").assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.start_game)).assertIsDisplayed()
         composeRule.runOnIdle {
             assertEquals(listOf(73L), repository.localSelectionIds)
             assertEquals(0, player.playCalls)
         }
 
         // Holding preview preparation open lets both tap events hit one active preparation.
-        composeRule.onNodeWithText("Начать игру").performTouchInput { doubleClick() }
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.start_game)).performTouchInput { doubleClick() }
         try {
             composeRule.waitUntil(timeoutMillis = 5_000) { previews.firstRequest.isCompleted }
             composeRule.runOnIdle { assertEquals(1, previews.previewCalls) }
@@ -90,7 +91,7 @@ class AppNavigationTest {
         pressBack()
 
         composeRule.onNodeWithText("Saved local mix").assertIsDisplayed()
-        composeRule.onNodeWithText("Начать игру").assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.start_game)).assertIsDisplayed()
         composeRule.runOnIdle {
             assertEquals(1, previews.previewCalls)
             assertEquals(1, player.playCalls)

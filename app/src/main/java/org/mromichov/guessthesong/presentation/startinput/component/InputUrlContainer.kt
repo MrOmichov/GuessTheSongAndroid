@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppContainer
 import org.mromichov.guessthesong.presentation.startinput.StartInputUiState
 
@@ -28,7 +30,7 @@ fun InputUrlContainer(
         ) {
             Row {
                 Text(
-                    text = "Ссылка на плейлист",
+                    text = stringResource(R.string.playlist_link),
                     style = MaterialTheme.typography.bodyLarge
                 )
             }

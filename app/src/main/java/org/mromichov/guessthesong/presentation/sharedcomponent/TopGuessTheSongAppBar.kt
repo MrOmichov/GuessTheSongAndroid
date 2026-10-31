@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import org.mromichov.guessthesong.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -15,7 +16,7 @@ fun TopGuessTheSongAppBar(
     TopAppBar(
         title = {
             Text(
-                text = "Guess the Song",
+                text = stringResource(R.string.app_title),
                 style = MaterialTheme.typography.headlineMedium
             )
         },
@@ -24,7 +25,7 @@ fun TopGuessTheSongAppBar(
                 IconButton(onClick = back) {
                     Icon(
                         painter = painterResource(R.drawable.arrow_back),
-                        contentDescription = "Back"
+                        contentDescription = stringResource(R.string.back)
                     )
                 }
             }

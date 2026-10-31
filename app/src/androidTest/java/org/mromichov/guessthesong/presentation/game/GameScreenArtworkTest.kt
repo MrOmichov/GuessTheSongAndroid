@@ -17,6 +17,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.core.theme.GuessTheSongTheme
 import org.mromichov.guessthesong.domain.game.GameConfig
 import org.mromichov.guessthesong.domain.game.GameManager
@@ -61,25 +62,27 @@ class GameScreenArtworkTest {
         }
 
         composeRule.waitUntil(5_000) { player.playCalls == 1 }
-        composeRule.onNodeWithContentDescription("Обложка скрыта").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(composeRule.activity.getString(R.string.question_cover_hidden)).assertIsDisplayed()
         composeRule.onNodeWithText("?").assertIsDisplayed()
 
         composeRule.runOnIdle { player.finishSnippet() }
         composeRule.waitUntil(5_000) { viewModel.uiState.value is GameUiState.Guessing }
 
-        composeRule.onNodeWithContentDescription("Обложка скрыта").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(composeRule.activity.getString(R.string.question_cover_hidden)).assertIsDisplayed()
         composeRule.onNodeWithText("?").assertIsDisplayed()
-        val optionTexts = tracks.map { "${it.title} от ${it.artist}" }
+        val optionTexts = tracks.map {
+            composeRule.activity.getString(R.string.track_option, it.title, it.artist)
+        }
             .filter { text -> composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
         assertEquals(4, optionTexts.size)
 
         composeRule.onNodeWithText(optionTexts.first()).performClick()
         composeRule.waitUntil(5_000) { viewModel.uiState.value is GameUiState.Answer }
 
-        composeRule.onNodeWithContentDescription("Обложка скрыта").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(composeRule.activity.getString(R.string.question_cover_hidden)).assertDoesNotExist()
         composeRule.onNodeWithText("?").assertDoesNotExist()
-        composeRule.onNodeWithContentDescription("Обложка трека").assertIsDisplayed()
-        composeRule.onNodeWithText("Правильный ответ:", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(composeRule.activity.getString(R.string.track_cover)).assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.correct_answer, "", "").substringBefore(":") + ":", substring = true).assertIsDisplayed()
 
         composeRule.runOnIdle { viewModelStore.clear() }
     }

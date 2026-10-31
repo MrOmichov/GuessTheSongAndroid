@@ -3,6 +3,7 @@ package org.mromichov.guessthesong.presentation.startinput
 import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
 import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
+import org.mromichov.guessthesong.presentation.error.UiText
 
 sealed class StartInputUiState {
     object Menu : StartInputUiState()
@@ -14,16 +15,16 @@ sealed class StartInputUiState {
         val fetchedPlaylist: RemotePlaylist,
     ) : StartInputUiState()
 
-    data class ImportError(val message: String) : StartInputUiState()
+    data class ImportError(val message: UiText) : StartInputUiState()
 
     data class SelectingSavedPlaylist(val id: Long) : StartInputUiState()
-    data class SelectionError(val message: String) : StartInputUiState()
+    data class SelectionError(val message: UiText) : StartInputUiState()
 
     data class Selected(val playlist: PlaylistContent) : StartInputUiState()
     data class Preparing(val playlist: PlaylistContent, val completed: Int = 0, val total: Int = 0) : StartInputUiState()
     data class CancellingPreparation(val playlist: PlaylistContent) : StartInputUiState()
     data class PreparationError(
-        val message: String,
+        val message: UiText,
         val playlist: PlaylistContent,
     ) : StartInputUiState()
 

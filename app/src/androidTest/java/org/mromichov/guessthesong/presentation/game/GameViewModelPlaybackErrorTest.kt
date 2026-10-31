@@ -13,6 +13,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.domain.game.GameConfig
 import org.mromichov.guessthesong.domain.game.GameManager
 import org.mromichov.guessthesong.domain.model.Track
@@ -23,6 +24,7 @@ import org.mromichov.guessthesong.domain.repository.TrackArtworkRepository
 import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
 import org.mromichov.guessthesong.presentation.game.artwork.PrepareTrackCover
 import org.mromichov.guessthesong.presentation.game.artwork.TrackCoverLoader
+import org.mromichov.guessthesong.presentation.error.UiText
 
 @RunWith(AndroidJUnit4::class)
 class GameViewModelPlaybackErrorTest {
@@ -56,7 +58,7 @@ class GameViewModelPlaybackErrorTest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             viewModel.uiState.value is GameUiState.Error
         }
-        assertEquals(GameUiState.Error("player failed"), viewModel.uiState.value)
+        assertEquals(GameUiState.Error(UiText.Resource(R.string.error_playback)), viewModel.uiState.value)
         assertFalse(viewModel.uiState.value is GameUiState.Guessing)
         assertEquals(1, player.playCalls)
         composeRule.runOnIdle { viewModelStore.clear() }

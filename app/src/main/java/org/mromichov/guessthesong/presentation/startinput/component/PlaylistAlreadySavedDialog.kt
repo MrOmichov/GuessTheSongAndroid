@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.mromichov.guessthesong.R
 
 @Composable
 fun PlaylistAlreadySavedDialog(
@@ -22,10 +24,10 @@ fun PlaylistAlreadySavedDialog(
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = {
-            Text(text = "Плейлист $playlistTitle уже сохранён")
+            Text(text = stringResource(R.string.playlist_saved_title, playlistTitle))
         },
         text = {
-            Text(text = "Заменить сохранённый плейлист новым составом или добавить отдельную копию?")
+            Text(text = stringResource(R.string.playlist_conflict_text))
         },
         confirmButton = {
             Column(
@@ -34,16 +36,16 @@ fun PlaylistAlreadySavedDialog(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Button(onClick = onReplace) {
-                    Text(text = "Заменить плейлист")
+                    Text(text = stringResource(R.string.replace_playlist))
                 }
                 Button(onClick = onAdd) {
-                    Text("Добавить копию")
+                    Text(stringResource(R.string.add_copy))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         },
     )

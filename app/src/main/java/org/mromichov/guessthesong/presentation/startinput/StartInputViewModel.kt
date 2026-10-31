@@ -18,6 +18,8 @@ import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 import org.mromichov.guessthesong.domain.repository.SettingsRepository
+import org.mromichov.guessthesong.presentation.error.UserErrorContext
+import org.mromichov.guessthesong.presentation.error.UserErrorMapper
 import javax.inject.Inject
 
 class StartInputViewModel @Inject constructor(
@@ -52,16 +54,19 @@ class StartInputViewModel @Inject constructor(
     fun loadPlaylist(url: String) {
         if (!canLoadPlaylist(url)) return
         _uiState.value = StartInputUiState.Importing
+        var errorContext = UserErrorContext.IMPORT
         launchOperation(
-            onFailure = { StartInputUiState.ImportError(it.message ?: "Ошибка загрузки плейлиста") },
+            onFailure = { StartInputUiState.ImportError(UserErrorMapper.map(it, errorContext)) },
         ) { request ->
             val fetchedPlaylist = playlistRepository.fetchPlaylistByUrl(url).getOrThrow()
+            errorContext = UserErrorContext.STORAGE
             val existing = playlistRepository
                 .findLocalPlaylistByTitle(fetchedPlaylist.content.title)
                 .getOrThrow()
             if (existing != null) {
                 publish(request, StartInputUiState.PlaylistAlreadySavedConflict(existing, fetchedPlaylist))
             } else {
+                errorContext = UserErrorContext.SAVE
                 val saved = playlistRepository.savePlaylist(
                     fetchedPlaylist.content,
                     fetchedPlaylist.source.provider,
@@ -77,7 +82,7 @@ class StartInputViewModel @Inject constructor(
         ) return
         _uiState.value = StartInputUiState.SelectingSavedPlaylist(id)
         launchOperation(
-            onFailure = { StartInputUiState.SelectionError(it.message ?: "Не удалось открыть плейлист") },
+            onFailure = { StartInputUiState.SelectionError(UserErrorMapper.map(it, UserErrorContext.SELECTION)) },
         ) { request ->
             val localPlaylist = playlistRepository.getLocalPlaylist(id).getOrThrow()
             publish(request, StartInputUiState.Selected(localPlaylist.content))
@@ -95,7 +100,7 @@ class StartInputViewModel @Inject constructor(
         launchOperation(
             onFailure = {
                 StartInputUiState.PreparationError(
-                    message = it.message ?: "Ошибка подготовки игры",
+                    message = UserErrorMapper.map(it, UserErrorContext.PREPARATION),
                     playlist = playlist,
                 )
             },
@@ -195,7 +200,7 @@ class StartInputViewModel @Inject constructor(
     private fun saveConflictPlaylist(save: suspend () -> Result<LocalPlaylist>) {
         _uiState.value = StartInputUiState.Importing
         launchOperation(
-            onFailure = { StartInputUiState.ImportError(it.message ?: "Ошибка сохранения плейлиста") },
+            onFailure = { StartInputUiState.ImportError(UserErrorMapper.map(it, UserErrorContext.SAVE)) },
         ) { request ->
             val saved = save().getOrThrow()
             publish(request, StartInputUiState.Selected(saved.content))

@@ -9,12 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import org.mromichov.guessthesong.R
+import org.mromichov.guessthesong.presentation.error.UiText
 
 @Composable
 fun SettingsIntInputField(
     initValue: String,
-    changeSetting: (Int) -> String?,
-    showSnackbar: (String) -> Unit,
+    changeSetting: (Int) -> UiText?,
+    showSnackbar: (UiText) -> Unit,
 ) {
     var text by rememberSaveable { mutableStateOf(initValue) }
     var validText by rememberSaveable { mutableStateOf(initValue) }
@@ -33,8 +35,8 @@ fun SettingsIntInputField(
                 if (newValue.isEmpty()) null
                 else newValue.toIntOrNull()
 
-            val error: String? = if (validatedInput == null) {
-                "Введите целое число"
+            val error: UiText? = if (validatedInput == null) {
+                UiText.Resource(R.string.invalid_integer)
             } else {
                 changeSetting(validatedInput)
             }

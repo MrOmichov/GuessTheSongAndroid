@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -20,6 +21,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.collect
 import org.mromichov.guessthesong.R
+import org.mromichov.guessthesong.presentation.error.UiText
+import org.mromichov.guessthesong.presentation.error.resolve
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
 import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
 import org.mromichov.guessthesong.presentation.sharedcomponent.TopGuessTheSongAppBar
@@ -63,7 +66,7 @@ fun StartInputScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.settings),
-                        contentDescription = "Настройки",
+                        contentDescription = stringResource(R.string.settings),
                     )
                 }
             }
@@ -102,7 +105,7 @@ fun StartInputContent(
         when (uiState) {
             StartInputUiState.Menu -> MenuContent(viewModel, onOpenPlaylists)
             is StartInputUiState.SelectionError -> {
-                ErrorContent(uiState.message)
+                ErrorContent(uiState.message.resolve())
                 Spacer(Modifier.height(16.dp))
                 MenuContent(viewModel, onOpenPlaylists)
             }
@@ -149,9 +152,9 @@ fun StartInputContent(
             is StartInputUiState.ReadyToPlay,
             -> OperationProgressContent(
                 label = when (uiState) {
-                    StartInputUiState.CancellingToMenu -> "Отмена…"
-                    is StartInputUiState.SelectingSavedPlaylist -> "Открываем плейлист…"
-                    is StartInputUiState.ReadyToPlay -> "Игра готова…"
+                    StartInputUiState.CancellingToMenu -> stringResource(R.string.cancelling)
+                    is StartInputUiState.SelectingSavedPlaylist -> stringResource(R.string.opening_playlist)
+                    is StartInputUiState.ReadyToPlay -> stringResource(R.string.game_ready)
                 },
             )
         }
@@ -174,13 +177,13 @@ fun StartInputContent(
 private fun MenuContent(viewModel: StartInputViewModel, onOpenPlaylists: () -> Unit) {
     AppButton(
         icon = painterResource(R.drawable.download),
-        text = "Загрузить плейлист",
+        text = stringResource(R.string.import_playlist),
         onClick = viewModel::openImportForm,
     )
     Spacer(Modifier.height(16.dp))
     AppButton(
         icon = painterResource(R.drawable.playlist_placeholder),
-        text = "Сохранённые плейлисты",
+        text = stringResource(R.string.saved_playlists),
         onClick = onOpenPlaylists,
     )
 }
@@ -199,19 +202,19 @@ private fun ImportContent(
     }
     if (state is StartInputUiState.ImportError) {
         Spacer(Modifier.height(12.dp))
-        ErrorContent(state.message)
+        ErrorContent(state.message.resolve())
     }
     Spacer(Modifier.height(16.dp))
     AppButton(
         icon = painterResource(if (state == StartInputUiState.Importing) R.drawable.sync else R.drawable.download),
-        text = if (state == StartInputUiState.Importing) "Загрузка…" else "Загрузить",
+        text = if (state == StartInputUiState.Importing) stringResource(R.string.loading) else stringResource(R.string.load),
         onClick = { viewModel.loadPlaylist(urlText) },
         enabled = viewModel.canLoadPlaylist(urlText),
     )
     Spacer(Modifier.height(12.dp))
     AppButton(
         icon = painterResource(R.drawable.arrow_back),
-        text = if (state == StartInputUiState.Importing) "Отменить загрузку" else "Отмена",
+        text = if (state == StartInputUiState.Importing) stringResource(R.string.cancel_loading) else stringResource(R.string.cancel),
         onClick = viewModel::cancelImportForm,
     )
 }
@@ -220,7 +223,7 @@ private fun ImportContent(
 private fun SelectedPlaylistContent(
     viewModel: StartInputViewModel,
     playlistTitle: String,
-    showError: String?,
+    showError: UiText?,
     preparing: Boolean,
     cancellationPending: Boolean = false,
     completed: Int = 0,
@@ -234,31 +237,31 @@ private fun SelectedPlaylistContent(
     )
     if (showError != null) {
         Spacer(Modifier.height(12.dp))
-        ErrorContent(showError)
+        ErrorContent(showError.resolve())
     }
     if (preparing) {
         Spacer(Modifier.height(16.dp))
         if (!cancellationPending && total > 0) {
             LinearProgressIndicator(progress = { completed.toFloat() / total }, modifier = Modifier.width(300.dp))
             Spacer(Modifier.height(12.dp))
-            Text("Подготавливаем игру… ${completed * 100 / total}% ($completed/$total)")
+            Text(stringResource(R.string.preparing_game, completed * 100 / total, completed, total))
         } else {
             OperationProgressContent(
-                label = if (cancellationPending) "Завершаем отмену…" else "Подготавливаем игру…",
+                label = if (cancellationPending) stringResource(R.string.finishing_cancel) else stringResource(R.string.preparing),
             )
         }
     }
     Spacer(Modifier.height(16.dp))
     AppButton(
         icon = painterResource(R.drawable.play),
-        text = if (showError != null) "Повторить подготовку" else "Начать игру",
+        text = if (showError != null) stringResource(R.string.retry_preparation) else stringResource(R.string.start_game),
         onClick = viewModel::prepareGame,
         enabled = !preparing && viewModel.canPrepareGame(),
     )
     Spacer(Modifier.height(12.dp))
     AppButton(
         icon = painterResource(R.drawable.playlist_placeholder),
-        text = "Сменить плейлист",
+        text = stringResource(R.string.change_playlist),
         onClick = viewModel::changePlaylist,
         enabled = !preparing,
     )

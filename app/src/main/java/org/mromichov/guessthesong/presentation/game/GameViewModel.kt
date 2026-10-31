@@ -14,6 +14,8 @@ import org.mromichov.guessthesong.domain.model.GameRound
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.player.AudioPlayer
 import org.mromichov.guessthesong.presentation.game.artwork.PrepareTrackCover
+import org.mromichov.guessthesong.presentation.error.UserErrorContext
+import org.mromichov.guessthesong.presentation.error.UserErrorMapper
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -63,7 +65,7 @@ class GameViewModel @Inject constructor(
             coroutineContext.ensureActive()
             if (!ownsRound(index, round)) return@launch
             _uiState.value = if (error != null) {
-                GameUiState.Error(error.message ?: "Unknown error")
+                GameUiState.Error(UserErrorMapper.map(error, UserErrorContext.PLAYBACK))
             } else {
                 GameUiState.Guessing(index, gameManager.currentRoundOptions, cover)
             }

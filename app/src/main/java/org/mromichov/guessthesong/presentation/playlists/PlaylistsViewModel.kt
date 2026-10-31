@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
+import org.mromichov.guessthesong.presentation.error.UserErrorContext
+import org.mromichov.guessthesong.presentation.error.UserErrorMapper
 import javax.inject.Inject
 
 class PlaylistsViewModel @Inject constructor(
@@ -37,7 +39,7 @@ class PlaylistsViewModel @Inject constructor(
                         _uiState.value = PlaylistsUiState.Loaded(playlists)
                 }
                 .onFailure { error ->
-                    _uiState.value = PlaylistsUiState.Error(error.message ?: "Unknown error")
+                    _uiState.value = PlaylistsUiState.Error(UserErrorMapper.map(error, UserErrorContext.LIBRARY))
                 }
         }
     }

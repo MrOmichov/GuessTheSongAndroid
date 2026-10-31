@@ -22,6 +22,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.core.theme.GuessTheSongTheme
 import org.mromichov.guessthesong.domain.game.GameManager
 import org.mromichov.guessthesong.domain.model.Track
@@ -45,9 +46,9 @@ class StartInputScreenTest {
     fun menuShowsImportAndSavedPlaylistActionsWithoutUrlField() {
         showScreen(FakePlaylistRepository())
 
-        composeRule.onNodeWithText("Загрузить плейлист").assertIsDisplayed()
-        composeRule.onNodeWithText("Сохранённые плейлисты").assertIsDisplayed()
-        composeRule.onNodeWithText("Ссылка на плейлист").assertDoesNotExist()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.import_playlist)).assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.saved_playlists)).assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.playlist_link)).assertDoesNotExist()
         composeRule.onNode(hasSetTextAction()).assertDoesNotExist()
     }
 
@@ -55,9 +56,9 @@ class StartInputScreenTest {
     fun openingAndCancelingImportFormReturnsToMenu() {
         showScreen(FakePlaylistRepository())
 
-        composeRule.onNodeWithText("Загрузить плейлист").performClick()
-        composeRule.onNodeWithText("Ссылка на плейлист").assertIsDisplayed()
-        composeRule.onNodeWithText("Отмена").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.import_playlist)).performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.playlist_link)).assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.cancel)).performClick()
 
         assertMenu()
         composeRule.onNode(hasSetTextAction()).assertDoesNotExist()
@@ -66,8 +67,8 @@ class StartInputScreenTest {
     @Test
     fun backFromImportFormReturnsToMenu() {
         showScreen(FakePlaylistRepository())
-        composeRule.onNodeWithText("Загрузить плейлист").performClick()
-        composeRule.onNodeWithText("Ссылка на плейлист").assertExists()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.import_playlist)).performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.playlist_link)).assertExists()
 
         pressBack()
 
@@ -93,7 +94,7 @@ class StartInputScreenTest {
                 )
             }
         }
-        composeRule.onNodeWithText("Загрузить плейлист").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.import_playlist)).performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput(url)
 
         stateRestorationTester.emulateSavedInstanceStateRestore()
@@ -114,11 +115,11 @@ class StartInputScreenTest {
         showScreen(repository, onStartGame = { startCalls++ })
 
         openImportAndEnterUrl()
-        composeRule.onNodeWithText("Загрузить").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.load)).performClick()
         waitForState { screenStateIs<StartInputUiState.Selected>() }
 
         composeRule.onNodeWithText("Imported favorites").assertIsDisplayed()
-        composeRule.onNodeWithText("Начать игру").assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.start_game)).assertIsDisplayed()
         composeRule.runOnIdle { assertEquals(0, startCalls) }
     }
 
@@ -130,7 +131,7 @@ class StartInputScreenTest {
         showScreen(repository)
         openImportAndEnterUrl()
         composeRule.onNode(indeterminateProgressBar()).assertDoesNotExist()
-        composeRule.onNodeWithText("Загрузить").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.load)).performClick()
         waitForState { screenStateIs<StartInputUiState.Importing>() }
         composeRule.onNode(indeterminateProgressBar()).assertIsDisplayed()
 
@@ -163,26 +164,26 @@ class StartInputScreenTest {
             onStartGame = { startCalls++ },
         )
         openImportAndEnterUrl()
-        composeRule.onNodeWithText("Загрузить").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.load)).performClick()
         waitForState { screenStateIs<StartInputUiState.Selected>() }
-        composeRule.onNodeWithText("Начать игру").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.start_game)).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) { previewEntered.isCompleted }
 
         try {
             composeRule.waitUntil(timeoutMillis = 5_000) {
-                composeRule.onAllNodesWithText("Подготавливаем игру… 0% (0/1)")
+                composeRule.onAllNodesWithText(composeRule.activity.getString(R.string.preparing_game, 0, 0, 1))
                     .fetchSemanticsNodes().isNotEmpty()
             }
-            composeRule.onNodeWithText("Подготавливаем игру… 0% (0/1)").assertIsDisplayed()
+            composeRule.onNodeWithText(composeRule.activity.getString(R.string.preparing_game, 0, 0, 1)).assertIsDisplayed()
             pressBack()
             composeRule.onNodeWithText("Preparing mix").assertIsDisplayed()
-            composeRule.onNodeWithText("Завершаем отмену…").assertIsDisplayed()
+            composeRule.onNodeWithText(composeRule.activity.getString(R.string.finishing_cancel)).assertIsDisplayed()
         } finally {
             releasePreview.complete(Unit)
         }
         waitForState { screenStateIs<StartInputUiState.Selected>() }
 
-        composeRule.onNodeWithText("Начать игру").assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.start_game)).assertIsDisplayed()
         composeRule.runOnIdle { assertEquals(0, startCalls) }
     }
 
@@ -196,15 +197,15 @@ class StartInputScreenTest {
         )
         showScreen(repository)
         openImportAndEnterUrl()
-        composeRule.onNodeWithText("Загрузить").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.load)).performClick()
         waitForState { screenStateIs<StartInputUiState.PlaylistAlreadySavedConflict>() }
 
-        composeRule.onNodeWithText("Плейлист Shared mix уже сохранён").assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.playlist_saved_title, "Shared mix")).assertIsDisplayed()
         // The dialog overlays the form, so select its dismiss action from the last matching label.
-        composeRule.onAllNodesWithText("Отмена")[1].performClick()
+        composeRule.onAllNodesWithText(composeRule.activity.getString(R.string.cancel))[1].performClick()
 
-        composeRule.onNodeWithText("Ссылка на плейлист").assertIsDisplayed()
-        composeRule.onNodeWithText("Загрузить").assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.playlist_link)).assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.load)).assertIsDisplayed()
         composeRule.runOnIdle { assertEquals(0, repository.saveCalls) }
     }
 
@@ -231,13 +232,13 @@ class StartInputScreenTest {
     }
 
     private fun openImportAndEnterUrl() {
-        composeRule.onNodeWithText("Загрузить плейлист").performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.import_playlist)).performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput("https://example.test/playlist")
     }
 
     private fun assertMenu() {
-        composeRule.onNodeWithText("Загрузить плейлист").assertIsDisplayed()
-        composeRule.onNodeWithText("Сохранённые плейлисты").assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.import_playlist)).assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.saved_playlists)).assertIsDisplayed()
     }
 
     private fun pressBack() {

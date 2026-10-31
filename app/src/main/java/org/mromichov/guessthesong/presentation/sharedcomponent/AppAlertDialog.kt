@@ -6,6 +6,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import org.mromichov.guessthesong.R
 
 @Composable
 fun AppAlertDialog(
@@ -17,7 +19,7 @@ fun AppAlertDialog(
     icon: Painter
 ) {
     AlertDialog(
-        icon = { Icon(painter = icon, contentDescription = "AlertDialog icon") },
+        icon = { Icon(painter = icon, contentDescription = null) },
         title = { Text(dialogTitle) },
         text = { Text(dialogText) },
         onDismissRequest = onDismissRequest,

@@ -17,10 +17,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.asPainter
 import org.mromichov.guessthesong.R
+import org.mromichov.guessthesong.presentation.error.resolve
 import org.mromichov.guessthesong.presentation.game.artwork.CoilPreparedCover
 import org.mromichov.guessthesong.presentation.game.component.BiDirectionalProgressBar
 import org.mromichov.guessthesong.presentation.game.component.QuestionCover
@@ -68,7 +70,7 @@ private fun ListeningPreviewContent(viewModel: GameViewModel) {
     }
 
     Column {
-        Text("${viewModel.currentRoundIndex + 1}") // TODO не делать +1 а передавать через State
+        Text((viewModel.currentRoundIndex + 1).toString()) // TODO не делать +1 а передавать через State
         AppContainer {
             Column {
                 QuestionCover(rotating = true)
@@ -76,7 +78,7 @@ private fun ListeningPreviewContent(viewModel: GameViewModel) {
                     progress = animatableProgress.value,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                Text(text = "${currentMs / 1000} / ${durationMs / 1000}")
+                Text(text = stringResource(R.string.duration_progress, currentMs / 1000, durationMs / 1000))
             }
         }
     }
@@ -85,14 +87,14 @@ private fun ListeningPreviewContent(viewModel: GameViewModel) {
 @Composable
 private fun GuessingContent(viewModel: GameViewModel, state: GameUiState.Guessing) {
     Column {
-        Text("${state.currentRoundIndex + 1}")
+        Text((state.currentRoundIndex + 1).toString())
         AppContainer { QuestionCover(rotating = false) }
         LazyColumn {
             items(state.options.size) {
                 OutlinedButton(
                     onClick = { viewModel.checkAnswer(state.options[it]) }
                 ) {
-                    Text(text = "${state.options[it].title} от ${state.options[it].artist}")
+                    Text(text = stringResource(R.string.track_option, state.options[it].title, state.options[it].artist))
                 }
             }
         }
@@ -104,30 +106,30 @@ private fun AnswerContent(viewModel: GameViewModel, state: GameUiState.Answer) {
     val preparedCoverImage = (state.preparedCover as? CoilPreparedCover)?.image
     val coverPainter = preparedCoverImage?.asPainter(context = LocalContext.current)
     Column {
-        Text("${state.currentRoundIndex + 1}")
+        Text((state.currentRoundIndex + 1).toString())
         AppContainer {
             Column {
                 Image(
                     painter = coverPainter ?: painterResource(R.drawable.app_icon_playstore),
-                    contentDescription = "Обложка трека",
+                    contentDescription = stringResource(R.string.track_cover),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(50.dp)
                         .clip(CircleShape),
                 )
-                Text("Правильный ответ: ${state.answer.title} от ${state.answer.artist}")
+                Text(stringResource(R.string.correct_answer, state.answer.title, state.answer.artist))
                 Text(
                     if (state.isGuessed)
-                        "Ответ верный"
+                        stringResource(R.string.answer_correct)
                     else
-                        "Ответ неверный"
+                        stringResource(R.string.answer_incorrect)
                 )
             }
         }
         AppButton(
             icon = painterResource(R.drawable.chevron_right),
             onClick = { viewModel.startRoundOrGameOver() },
-            text = "Дальше"
+            text = stringResource(R.string.next)
         )
     }
 }
@@ -136,18 +138,18 @@ private fun AnswerContent(viewModel: GameViewModel, state: GameUiState.Answer) {
 private fun GameOverContent(state: GameUiState.GameOver, onEnd: () -> Unit) {
     Column {
         Text(
-            text = "Game Over",
+            text = stringResource(R.string.game_over),
             style = MaterialTheme.typography.headlineSmall,
         )
         Text(
-            text = "Угадано: ${state.score}",
+            text = stringResource(R.string.score_guessed, state.score),
             style = MaterialTheme.typography.bodyLarge
         )
 
         AppButton(
             icon = painterResource(R.drawable.home),
             onClick = onEnd,
-            text = "В главное меню"
+            text = stringResource(R.string.main_menu)
         )
     }
 }
@@ -156,12 +158,12 @@ private fun GameOverContent(state: GameUiState.GameOver, onEnd: () -> Unit) {
 private fun ErrorContent(state: GameUiState.Error, onEnd: () -> Unit) {
     Column {
         ErrorContainer {
-            Text(state.message)
+            Text(state.message.resolve())
         }
         AppButton(
             icon = painterResource(R.drawable.home),
             onClick = onEnd,
-            text = "В главное меню"
+            text = stringResource(R.string.main_menu)
         )
     }
 }

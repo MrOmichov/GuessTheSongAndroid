@@ -10,8 +10,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.mromichov.guessthesong.R
+import org.mromichov.guessthesong.presentation.error.UiText
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.mromichov.guessthesong.presentation.settings.component.SettingsIntInputField
@@ -25,6 +29,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     Scaffold(
@@ -56,12 +61,12 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = "Количество раундов"
+                                text = stringResource(R.string.rounds_count)
                             )
                             SettingsIntInputField(
                                 initValue = state.roundsNumber.toString(),
                                 changeSetting = viewModel::changeRoundsNumber,
-                                showSnackbar = { error -> scope.launch { snackbarHostState.showSnackbar(error) } }
+                                showSnackbar = { error -> scope.launch { snackbarHostState.showSnackbar(error.resolve(context)) } }
                             )
                         }
                     }
@@ -72,12 +77,12 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = "Длина отрывка, с"
+                                text = stringResource(R.string.snippet_length)
                             )
                             SettingsIntInputField(
                                 initValue = state.snippetLength.toString(),
                                 changeSetting = viewModel::changeSnippetLength,
-                                showSnackbar = { error -> scope.launch { snackbarHostState.showSnackbar(error) } }
+                                showSnackbar = { error -> scope.launch { snackbarHostState.showSnackbar(error.resolve(context)) } }
                             )
                         }
                     }
@@ -85,4 +90,8 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+private fun UiText.resolve(context: android.content.Context): String = when (this) {
+    is UiText.Resource -> context.getString(resId, *args.toTypedArray())
 }

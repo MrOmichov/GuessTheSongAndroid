@@ -1,15 +1,18 @@
 package org.mromichov.guessthesong.presentation.startinput.component
 
+import org.mromichov.guessthesong.R
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import androidx.test.platform.app.InstrumentationRegistry
 
 class PlaylistAlreadySavedDialogTest {
     @get:Rule
     val composeRule = createComposeRule()
+    private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
     fun showsPlaylistTitleAndRunsReplaceCallback() {
@@ -22,8 +25,8 @@ class PlaylistAlreadySavedDialogTest {
             onAdd = { addCalls++ },
         )
 
-        composeRule.onNodeWithText("Плейлист Favorites уже сохранён").assertExists()
-        composeRule.onNodeWithText("Заменить плейлист").performClick()
+        composeRule.onNodeWithText(context.getString(R.string.playlist_saved_title, "Favorites")).assertExists()
+        composeRule.onNodeWithText(context.getString(R.string.replace_playlist)).performClick()
 
         composeRule.runOnIdle {
             assertEquals(1, replaceCalls)
@@ -43,7 +46,7 @@ class PlaylistAlreadySavedDialogTest {
             onAdd = { addCalls++ },
         )
 
-        composeRule.onNodeWithText("Добавить копию").performClick()
+        composeRule.onNodeWithText(context.getString(R.string.add_copy)).performClick()
 
         composeRule.runOnIdle {
             assertEquals(0, replaceCalls)
@@ -63,7 +66,7 @@ class PlaylistAlreadySavedDialogTest {
             onAdd = { addCalls++ },
         )
 
-        composeRule.onNodeWithText("Отмена").performClick()
+        composeRule.onNodeWithText(context.getString(R.string.cancel)).performClick()
 
         composeRule.runOnIdle {
             assertEquals(0, replaceCalls)

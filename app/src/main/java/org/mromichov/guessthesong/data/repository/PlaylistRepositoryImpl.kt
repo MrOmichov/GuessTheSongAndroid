@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.mromichov.guessthesong.data.local.PlaylistCoverStorage
+import org.mromichov.guessthesong.core.exception.UnsupportedPlaylistUrlException
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
 import org.mromichov.guessthesong.core.database.PlaylistWithTracks
 import org.mromichov.guessthesong.core.database.entity.PlaylistEntity
@@ -180,7 +181,7 @@ class PlaylistRepositoryImpl @Inject constructor(
                 yandexMapper.toDomain(playlistId = target.uuid, dto = response)
             }
 
-            null -> throw IllegalArgumentException("Unsupported or invalid playlist URL: $url")
+            null -> throw UnsupportedPlaylistUrlException()
         }
     }
 

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import org.junit.Rule
 import org.junit.Test
 import org.junit.Assert.assertTrue
+import org.mromichov.guessthesong.R
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.test.platform.app.InstrumentationRegistry
@@ -25,6 +26,7 @@ import java.io.File
 class PlaylistCardTest {
     @get:Rule
     val composeRule = createComposeRule()
+    private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
     fun cardShowsOfflineCoverNodeAndProviderAndUpdatesProviderAfterReplacement() {
@@ -39,19 +41,19 @@ class PlaylistCardTest {
         composeRule.setContent { MaterialTheme { PlaylistCard(playlist.value, onClick = {}, onLongClick = {}) } }
 
         composeRule.onNodeWithText("Favorites").assertExists()
-        composeRule.onNodeWithContentDescription("Обложка плейлиста Favorites").assertExists()
-        composeRule.onNodeWithContentDescription("Spotify").assertExists()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.playlist_cover, "Favorites")).assertExists()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.spotify)).assertExists()
 
         composeRule.runOnIdle {
             playlist.value = playlist.value.copy(provider = PlaylistProvider.YANDEX_MUSIC)
         }
-        composeRule.onNodeWithContentDescription("Яндекс Музыка").assertExists()
-        composeRule.onNodeWithContentDescription("Spotify").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.yandex_music)).assertExists()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.spotify)).assertDoesNotExist()
 
         composeRule.runOnIdle {
             playlist.value = playlist.value.copy(provider = null)
         }
-        composeRule.onNodeWithContentDescription("Яндекс Музыка").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.yandex_music)).assertDoesNotExist()
     }
 
     @Test
@@ -69,8 +71,8 @@ class PlaylistCardTest {
             )
         } }
 
-        composeRule.onNodeWithContentDescription("Обложка плейлиста Offline").assertExists()
-        composeRule.onNodeWithContentDescription("Яндекс Музыка").assertExists()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.playlist_cover, "Offline")).assertExists()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.yandex_music)).assertExists()
     }
 
     @Test
@@ -91,7 +93,7 @@ class PlaylistCardTest {
         }
 
         val root = composeRule.onRoot().getUnclippedBoundsInRoot()
-        val provider = composeRule.onNodeWithContentDescription("Spotify").getUnclippedBoundsInRoot()
+        val provider = composeRule.onNodeWithContentDescription(context.getString(R.string.spotify)).getUnclippedBoundsInRoot()
         composeRule.onNodeWithText(title).assertExists()
         assertTrue(provider.right <= root.right)
         assertTrue(provider.bottom <= root.bottom)
@@ -149,12 +151,12 @@ class PlaylistCardTest {
                 ).captureToImage().toPixelMap()
                 pixels[pixels.width / 2, pixels.height / 2].green < 0.9f
             }
-            composeRule.onNodeWithContentDescription("Обложка плейлиста Corrupt cover").assertExists()
+            composeRule.onNodeWithContentDescription(context.getString(R.string.playlist_cover, "Corrupt cover")).assertExists()
 
             composeRule.runOnIdle {
                 playlist.value = LocalPlaylist(5L, PlaylistContent("No cover", emptyList()))
             }
-            composeRule.onNodeWithContentDescription("Обложка плейлиста No cover").assertExists()
+            composeRule.onNodeWithContentDescription(context.getString(R.string.playlist_cover, "No cover")).assertExists()
         } finally {
             validFile.delete()
             File(coversDirectory, "corrupt.img").delete()

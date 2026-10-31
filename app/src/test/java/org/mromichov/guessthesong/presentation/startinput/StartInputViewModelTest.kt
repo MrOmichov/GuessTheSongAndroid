@@ -13,6 +13,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.domain.game.GameConfig
 import org.mromichov.guessthesong.domain.game.GameManager
 import org.mromichov.guessthesong.domain.model.Track
@@ -21,6 +22,7 @@ import org.mromichov.guessthesong.domain.model.playlist.*
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
 import org.mromichov.guessthesong.domain.repository.SettingsRepository
 import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
+import org.mromichov.guessthesong.presentation.error.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StartInputViewModelTest {
@@ -164,7 +166,7 @@ class StartInputViewModelTest {
         viewModel.selectSavedPlaylist(88L)
         advanceUntilIdle()
 
-        assertEquals(StartInputUiState.SelectionError("playlist missing"), viewModel.uiState.value)
+        assertEquals(StartInputUiState.SelectionError(UiText.Resource(R.string.error_open_playlist)), viewModel.uiState.value)
         assertEquals(0, repository.fetchCalls)
         assertEquals(0, repository.saveCalls)
     }
@@ -222,7 +224,7 @@ class StartInputViewModelTest {
         viewModel.prepareGame()
         advanceUntilIdle()
 
-        assertEquals(StartInputUiState.PreparationError("preview unavailable", content), viewModel.uiState.value)
+        assertEquals(StartInputUiState.PreparationError(UiText.Resource(R.string.error_prepare_game), content), viewModel.uiState.value)
         assertEquals(0, manager.currentRoundIndex)
         assertEquals(0, manager.score)
 
@@ -286,7 +288,7 @@ class StartInputViewModelTest {
 
         lookup.complete(Result.failure(IllegalStateException("offline")))
         advanceUntilIdle()
-        assertEquals(StartInputUiState.ImportError("offline"), viewModel.uiState.value)
+        assertEquals(StartInputUiState.ImportError(UiText.Resource(R.string.error_import_failed)), viewModel.uiState.value)
     }
 
     @Test

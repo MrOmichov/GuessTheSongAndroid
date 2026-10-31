@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -27,6 +28,7 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import java.io.File
 import org.mromichov.guessthesong.R
+import org.mromichov.guessthesong.presentation.error.resolve
 import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppAlertDialog
@@ -42,13 +44,14 @@ fun PlaylistsScreen(
     onEmptyListImport: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(viewModel.showDeleteErrorSnackbar) {
         if (viewModel.showDeleteErrorSnackbar) {
             scope.launch {
-                snackbarHostState.showSnackbar("Не удалось удалить плейлист")
+                snackbarHostState.showSnackbar(context.getString(R.string.error_delete_playlist))
             }
         }
     }
@@ -69,18 +72,18 @@ fun PlaylistsScreen(
             if (uiState is PlaylistsUiState.DeletePlaylistIntent) {
                 val state = uiState as PlaylistsUiState.DeletePlaylistIntent
                 AppAlertDialog(
-                    dialogTitle = "Вы хотите удалить этот плейлист?",
+                    dialogTitle = context.getString(R.string.delete_playlist_confirm),
                     dialogText = "",
                     onDismissRequest = { viewModel.backToLoaded(state.playlistsLoaded) },
                     dismissButton = { AppButton(
                         icon = painterResource(R.drawable.arrow_back),
                         onClick = { viewModel.backToLoaded(state.playlistsLoaded) },
-                        text = "Отмена"
+                        text = context.getString(R.string.cancel)
                     ) },
                     confirmButton = { AppButton(
                         icon = painterResource(R.drawable.delete),
                         onClick = { viewModel.deletePlaylist(state.id) },
-                        text = "Да"
+                        text = context.getString(R.string.yes)
                     ) },
                     icon = painterResource(R.drawable.delete),
                 )
@@ -89,11 +92,11 @@ fun PlaylistsScreen(
             when (uiState) {
                 is PlaylistsUiState.Error -> {
                     ErrorContainer {
-                        Text(text = (uiState as PlaylistsUiState.Error).message)
+                        Text(text = (uiState as PlaylistsUiState.Error).message.resolve())
                     }
                     AppButton(
                         icon = painterResource(R.drawable.sync),
-                        text = "Перезагрузить",
+                        text = stringResource(R.string.reload),
                         onClick = { viewModel.loadPlaylists() }
                     )
                 }
@@ -123,11 +126,11 @@ fun PlaylistsScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(horizontal = 24.dp),
                     ) {
-                        Text("Сохранённых плейлистов пока нет", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.empty_playlists), style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.height(16.dp))
                         AppButton(
                             icon = painterResource(R.drawable.download),
-                            text = "Загрузить плейлист",
+                            text = stringResource(R.string.import_playlist),
                             onClick = onEmptyListImport,
                         )
                     }
@@ -173,7 +176,7 @@ internal fun PlaylistCard(playlist: LocalPlaylist, onClick: () -> Unit, onLongCl
         Column {
             AsyncImage(
                 model = coverFile,
-                contentDescription = "Обложка плейлиста ${playlist.content.title}",
+                contentDescription = stringResource(R.string.playlist_cover, playlist.content.title),
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
@@ -201,7 +204,7 @@ internal fun PlaylistCard(playlist: LocalPlaylist, onClick: () -> Unit, onLongCl
         }
         val providerDescription = when (playlist.provider) {
             PlaylistProvider.SPOTIFY -> "Spotify"
-            PlaylistProvider.YANDEX_MUSIC -> "Яндекс Музыка"
+            PlaylistProvider.YANDEX_MUSIC -> context.getString(R.string.yandex_music)
             null -> null
         }
         if (providerIcon != null && providerDescription != null) {

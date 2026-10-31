@@ -20,9 +20,12 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.mromichov.guessthesong.R
 
 @Composable
 internal fun QuestionCover(rotating: Boolean) {
+    val hiddenCoverDescription = stringResource(R.string.question_cover_hidden)
     val angle = if (rotating) {
         val transition = rememberInfiniteTransition(label = "question cover")
         val value by transition.animateFloat(
@@ -37,7 +40,7 @@ internal fun QuestionCover(rotating: Boolean) {
     Box(
         modifier = Modifier
             .size(50.dp)
-            .semantics(mergeDescendants = true) { contentDescription = "Обложка скрыта" }
+            .semantics(mergeDescendants = true) { contentDescription = hiddenCoverDescription }
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
             .rotate(angle),
         contentAlignment = Alignment.Center,

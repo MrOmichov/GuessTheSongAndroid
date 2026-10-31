@@ -9,12 +9,14 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mromichov.guessthesong.R
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
 import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
 import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 import org.mromichov.guessthesong.domain.repository.PlaylistRepository
+import org.mromichov.guessthesong.presentation.error.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistsViewModelTest {
@@ -70,7 +72,7 @@ class PlaylistsViewModelTest {
             val viewModel = PlaylistsViewModel(repository)
 
             runCurrent()
-            assertEquals(PlaylistsUiState.Error("Database unavailable"), viewModel.uiState.value)
+            assertEquals(PlaylistsUiState.Error(UiText.Resource(R.string.error_load_library)), viewModel.uiState.value)
 
             viewModel.loadPlaylists()
             runCurrent()
