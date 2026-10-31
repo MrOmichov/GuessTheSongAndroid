@@ -1,7 +1,13 @@
 package org.mromichov.guessthesong.core.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -30,38 +36,79 @@ object SettingsRoute
 object PlaylistsRoute
 
 @Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
+fun AppNavigation(navController: NavHostController = rememberNavController()) {
+    val viewModelFactory = LocalViewModelProvider.current
 
     NavHost(navController = navController, startDestination = StartInputRoute) {
-        composable<StartInputRoute> {
-            val startInputViewModel: StartInputViewModel = viewModel(factory = LocalViewModelProvider.current)
+        composable<StartInputRoute> { startEntry ->
+            val startInputViewModel: StartInputViewModel = viewModel(
+                viewModelStoreOwner = startEntry,
+                factory = viewModelFactory,
+            )
             StartInputScreen(
                 viewModel = startInputViewModel,
-                startGame = { navController.navigate(GameRoute) },
+                startGame = {
+                    val isStartRouteActive = navController.currentDestination
+                        ?.hasRoute<StartInputRoute>() == true
+                    if (isStartRouteActive && startInputViewModel.consumeReadyToPlay()) {
+                        navController.navigate(GameRoute) { launchSingleTop = true }
+                    }
+                },
                 onOpenSettings = { navController.navigate(SettingsRoute) },
-                onOpenPlaylists = { navController.navigate(PlaylistsRoute) },
+                onOpenPlaylists = {
+                    if (navController.currentDestination?.hasRoute<StartInputRoute>() == true) {
+                        navController.navigate(PlaylistsRoute)
+                    }
+                },
             )
         }
 
         composable<GameRoute> {
-            val gameViewModel: GameViewModel = viewModel(factory = LocalViewModelProvider.current)
+            val gameViewModel: GameViewModel = viewModel(factory = viewModelFactory)
             GameScreen(viewModel = gameViewModel, onEnd = { navController.popBackStack() })
         }
 
         composable<SettingsRoute> {
-            val settingsViewModel: SettingsViewModel = viewModel(factory = LocalViewModelProvider.current)
+            val settingsViewModel: SettingsViewModel = viewModel(factory = viewModelFactory)
             SettingsScreen(
                 viewModel = settingsViewModel,
-                back = { navController.popBackStack() }
+                back = { navController.popBackStack() },
             )
         }
 
-        composable<PlaylistsRoute> {
-            val playlistsViewModel: PlaylistsViewModel = viewModel(factory = LocalViewModelProvider.current)
+        composable<PlaylistsRoute> { playlistsEntry ->
+            val playlistsViewModel: PlaylistsViewModel = viewModel(
+                viewModelStoreOwner = playlistsEntry,
+                factory = viewModelFactory,
+            )
+            val startInputEntry = remember(navController) {
+                navController.getBackStackEntry<StartInputRoute>()
+            }
+            val startInputViewModel: StartInputViewModel = viewModel(
+                viewModelStoreOwner = startInputEntry,
+                factory = viewModelFactory,
+            )
+            var selectionHandled by remember(playlistsEntry.id) { mutableStateOf(false) }
+
             PlaylistsScreen(
                 viewModel = playlistsViewModel,
-                back = { navController.popBackStack() }
+                back = { navController.popBackStack() },
+                onPlaylistSelected = { id ->
+                    val isPlaylistsRouteActive = navController.currentDestination
+                        ?.hasRoute<PlaylistsRoute>() == true
+                    if (isPlaylistsRouteActive && !selectionHandled) {
+                        selectionHandled = true
+                        startInputViewModel.selectSavedPlaylist(id)
+                        navController.popBackStack()
+                    }
+                },
+                onEmptyListImport = {
+                    val isPlaylistsRouteActive = navController.currentDestination
+                        ?.hasRoute<PlaylistsRoute>() == true
+                    if (isPlaylistsRouteActive && navController.popBackStack()) {
+                        startInputViewModel.openImportForm()
+                    }
+                },
             )
         }
     }

@@ -3,17 +3,22 @@ package org.mromichov.guessthesong.data.repository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mromichov.guessthesong.core.database.entity.TrackEntity
+import org.mromichov.guessthesong.core.exception.ItunesAccessForbiddenException
+import org.mromichov.guessthesong.core.exception.TrackPreviewNotFoundException
 import org.mromichov.guessthesong.data.dao.FakePlaylistTracksDao
 import org.mromichov.guessthesong.data.remote.itunes.ItunesApi
 import org.mromichov.guessthesong.data.remote.itunes.ItunesMapper
@@ -66,7 +71,9 @@ class TrackPreviewRepositoryImplTest {
             val result = repository.getPreview("Unknown Artist", "Unknown Track")
 
             assertTrue(result.isFailure)
-            assertTrue(result.exceptionOrNull() is NoSuchElementException)
+            val error = result.exceptionOrNull()
+            assertTrue(error is TrackPreviewNotFoundException)
+            assertEquals("Track preview not found, cause: Unknown Artist Unknown Track", error?.message)
             assertEquals(1, engine.requestHistory.size)
         } finally {
             client.close()
@@ -84,6 +91,87 @@ class TrackPreviewRepositoryImplTest {
 
             assertTrue(result.isFailure)
             assertTrue(result.exceptionOrNull() is IllegalStateException)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun getPreview_whenItunesReturns403WithHtml_returnsForbiddenDomainFailure() = runTest {
+        val engine = MockEngine {
+            respond("<html><body>Forbidden</body></html>", HttpStatusCode.Forbidden,
+                headersOf(HttpHeaders.ContentType, "text/html"))
+        }
+        val client = createClient(engine)
+
+        try {
+            val repository = TrackPreviewRepositoryImpl(ItunesApi(client), ItunesMapper(), FakePlaylistTracksDao())
+            val result = repository.getPreview("Artist", "Track")
+
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is ItunesAccessForbiddenException)
+            assertEquals(1, engine.requestHistory.size)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun getPreview_whenItunesReturnsOtherHttpError_preservesHttpFailure() = runTest {
+        val engine = MockEngine {
+            respond("rate limited", HttpStatusCode.TooManyRequests,
+                headersOf(HttpHeaders.ContentType, "text/plain"))
+        }
+        val client = createClient(engine)
+
+        try {
+            val repository = TrackPreviewRepositoryImpl(ItunesApi(client), ItunesMapper(), FakePlaylistTracksDao())
+            val result = repository.getPreview("Artist", "Track")
+
+            assertTrue(result.isFailure)
+            val error = result.exceptionOrNull()
+            assertTrue(error is ClientRequestException)
+            assertEquals(HttpStatusCode.TooManyRequests, (error as ClientRequestException).response.status)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun getPreview_whenItunesReturns500_preservesServerFailure() = runTest {
+        val engine = MockEngine {
+            respond("upstream failure", HttpStatusCode.InternalServerError,
+                headersOf(HttpHeaders.ContentType, "text/plain"))
+        }
+        val client = createClient(engine)
+
+        try {
+            val repository = TrackPreviewRepositoryImpl(ItunesApi(client), ItunesMapper(), FakePlaylistTracksDao())
+            val result = repository.getPreview("Artist", "Track")
+
+            assertTrue(result.isFailure)
+            val error = result.exceptionOrNull()
+            assertTrue(error is ServerResponseException)
+            assertEquals(HttpStatusCode.InternalServerError, (error as ServerResponseException).response.status)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun getPreview_whenRequestIsCancelled_rethrowsCancellation() = runTest {
+        val cancellation = CancellationException("test cancelled")
+        val engine = MockEngine { throw cancellation }
+        val client = createClient(engine)
+
+        try {
+            val repository = TrackPreviewRepositoryImpl(ItunesApi(client), ItunesMapper(), FakePlaylistTracksDao())
+            try {
+                repository.getPreview("Artist", "Track")
+                throw AssertionError("Expected cancellation to propagate")
+            } catch (actual: CancellationException) {
+                assertEquals(cancellation.message, actual.message)
+            }
         } finally {
             client.close()
         }

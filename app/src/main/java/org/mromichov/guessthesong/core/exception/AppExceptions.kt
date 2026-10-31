@@ -1,11 +1,27 @@
 package org.mromichov.guessthesong.core.exception
 
-class TrackPreviewException : Exception() {
+class TrackPreviewNotFoundException(private val searchQuery: String) : Exception() {
     override val message: String
-        get() = "Failed to get preview"
+        get() = "Track preview not found, cause: $searchQuery"
 }
 
-class TrackCountException : Exception() {
+class TrackCountException(
+    private val actualTrackCount: Int,
+    private val neededTrackCount: Int,
+) : Exception() {
     override val message: String
-        get() = "There are fewer tracks in the playlist than needed"
+        get() = "There are $actualTrackCount tracks in the playlist. Needed: $neededTrackCount"
+}
+
+class TrackPreviewCountException(
+    private val foundTrackPreviewCount: Int,
+    private val neededTrackCount: Int,
+) : Exception() {
+    override val message: String
+        get() = "There are found $foundTrackPreviewCount track previews. Needed: $neededTrackCount"
+}
+
+class ItunesAccessForbiddenException : Exception() {
+    override val message: String
+        get() = "Failed to load preview. Possible cause: VPN or proxy is turned on."
 }

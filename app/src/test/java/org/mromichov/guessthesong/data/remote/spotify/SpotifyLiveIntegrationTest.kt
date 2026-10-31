@@ -30,20 +30,20 @@ class SpotifyLiveIntegrationTest {
             val spotifyEmbedDto = api.getPlaylist(target!!.id)
             assertNotNull("Playlist embed should be fetched successfully", spotifyEmbedDto)
 
-            val domainPlaylist = mapper.toDomain(playlistId = target.id, dto = spotifyEmbedDto)
+            val domainPlaylist = mapper.toDomain(playlistExternalId = target.id, dto = spotifyEmbedDto)
 
             println("=== LIVE SPOTIFY USER PLAYLIST ===")
-            println("Title: ${domainPlaylist.title}")
-            println("Total tracks: ${domainPlaylist.tracks.size}")
+            println("Title: ${domainPlaylist.content.title}")
+            println("Total tracks: ${domainPlaylist.content.tracks.size}")
             println("First 5 tracks:")
-            domainPlaylist.tracks.take(5).forEachIndexed { index, track ->
+            domainPlaylist.content.tracks.take(5).forEachIndexed { index, track ->
                 println("${index + 1}. ${track.artist} - ${track.title} [${track.durationMs / 1000}s] (Cover: ${track.coverUrl})")
             }
 
-            assertTrue("Playlist title should not be blank", domainPlaylist.title.isNotBlank())
-            assertFalse("Playlist tracks should not be empty", domainPlaylist.tracks.isEmpty())
+            assertTrue("Playlist title should not be blank", domainPlaylist.content.title.isNotBlank())
+            assertFalse("Playlist tracks should not be empty", domainPlaylist.content.tracks.isEmpty())
 
-            val firstTrack = domainPlaylist.tracks.first()
+            val firstTrack = domainPlaylist.content.tracks.first()
             assertTrue("Track title should not be blank", firstTrack.title.isNotBlank())
             assertTrue("Track artist should not be blank", firstTrack.artist.isNotBlank())
         } finally {
@@ -68,14 +68,14 @@ class SpotifyLiveIntegrationTest {
             val spotifyEmbedDto = api.getPlaylist(target!!.id)
             assertNotNull("Playlist embed should be fetched successfully", spotifyEmbedDto)
 
-            val domainPlaylist = mapper.toDomain(playlistId = target.id, dto = spotifyEmbedDto)
+            val domainPlaylist = mapper.toDomain(playlistExternalId = target.id, dto = spotifyEmbedDto)
 
             println("=== LIVE SPOTIFY EDITORIAL PLAYLIST ===")
-            println("Title: ${domainPlaylist.title}")
-            println("Total tracks: ${domainPlaylist.tracks.size}")
+            println("Title: ${domainPlaylist.content.title}")
+            println("Total tracks: ${domainPlaylist.content.tracks.size}")
 
-            assertTrue("Playlist title should not be blank", domainPlaylist.title.isNotBlank())
-            assertFalse("Playlist tracks should not be empty", domainPlaylist.tracks.isEmpty())
+            assertTrue("Playlist title should not be blank", domainPlaylist.content.title.isNotBlank())
+            assertFalse("Playlist tracks should not be empty", domainPlaylist.content.tracks.isEmpty())
         } finally {
             client.close()
         }

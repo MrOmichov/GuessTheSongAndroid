@@ -1,6 +1,9 @@
 package org.mromichov.guessthesong.data.repository
 
+import io.ktor.client.plugins.*
 import kotlinx.coroutines.CancellationException
+import org.mromichov.guessthesong.core.exception.ItunesAccessForbiddenException
+import org.mromichov.guessthesong.core.exception.TrackPreviewNotFoundException
 import org.mromichov.guessthesong.data.dao.PlaylistTracksDao
 import org.mromichov.guessthesong.data.remote.itunes.ItunesApi
 import org.mromichov.guessthesong.data.remote.itunes.ItunesMapper
@@ -32,9 +35,10 @@ class TrackPreviewRepositoryImpl @Inject constructor(
             }
 
             val query = "$artist $title".trim()
+
             val response = itunesApi.searchTrackPreview(query = query)
             val preview = mapper.findBestMatch(response)
-                ?: throw NoSuchElementException("No audio preview found in iTunes for query: $query")
+                ?: throw TrackPreviewNotFoundException(query)
 
             try {
                 playlistTracksDao.updateTrackPreviewUrlByTitleAndArtist(
@@ -52,7 +56,13 @@ class TrackPreviewRepositoryImpl @Inject constructor(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
-            Result.failure(throwable)
+            val error =
+                if (throwable is ClientRequestException && throwable.response.status.value == 403)
+                    ItunesAccessForbiddenException()
+                else
+                    throwable
+
+            Result.failure(error)
         }
     }
 }

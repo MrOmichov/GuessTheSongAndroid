@@ -1,21 +1,10 @@
 package org.mromichov.guessthesong.data.remote.spotify
 
 import kotlinx.serialization.json.Json
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import org.junit.Assert.*
 import org.junit.Test
-import org.mromichov.guessthesong.core.exception.TrackCountException
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyAudioPreviewDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyCoverArtDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyDataDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyEntityDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyImageSourceDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyPagePropsDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyPropsDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyStateDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebEmbedDto
-import org.mromichov.guessthesong.data.remote.spotify.dto.SpotifyWebTrackDto
+import org.mromichov.guessthesong.data.remote.spotify.dto.*
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistProvider
 
 class SpotifyMapperTest {
 
@@ -79,18 +68,20 @@ class SpotifyMapperTest {
             )
         )
 
-        val domainPlaylist = mapper.toDomain(playlistId = "4lcPGoGgUtNpexPogG2ctm", dto = embedDto)
+        val domainPlaylist = mapper.toDomain(playlistExternalId = "4lcPGoGgUtNpexPogG2ctm", dto = embedDto)
 
-        assertEquals("4lcPGoGgUtNpexPogG2ctm", domainPlaylist.id)
-        assertEquals("Dream Theater ballads", domainPlaylist.title)
-        assertEquals(20, domainPlaylist.tracks.size)
-        assertEquals("Track 0", domainPlaylist.tracks.first().title)
-        assertEquals("Artist 0", domainPlaylist.tracks.first().artist)
-        assertEquals("https://mosaic.scdn.co/640/cover.jpg", domainPlaylist.tracks.first().coverUrl)
+        assertEquals(PlaylistProvider.SPOTIFY, domainPlaylist.source.provider)
+        assertEquals("4lcPGoGgUtNpexPogG2ctm", domainPlaylist.source.externalId)
+        assertEquals("Dream Theater ballads", domainPlaylist.content.title)
+        assertEquals("https://mosaic.scdn.co/640/cover.jpg", domainPlaylist.content.coverUrl)
+        assertEquals(20, domainPlaylist.content.tracks.size)
+        assertEquals("Track 0", domainPlaylist.content.tracks.first().title)
+        assertEquals("Artist 0", domainPlaylist.content.tracks.first().artist)
+        assertEquals("https://mosaic.scdn.co/640/cover.jpg", domainPlaylist.content.tracks.first().coverUrl)
     }
 
-    @Test(expected = TrackCountException::class)
-    fun toDomain_lessThan20Tracks_throwsTrackCountException() {
+    @Test
+    fun toDomain_fiveTracks_mapsSuccessfully() {
         val tracks = List(5) { index ->
             SpotifyWebTrackDto(
                 uri = "spotify:track:track_$index",
@@ -116,7 +107,12 @@ class SpotifyMapperTest {
             )
         )
 
-        mapper.toDomain(playlistId = "short_playlist", dto = embedDto)
+        val domainPlaylist = mapper.toDomain(playlistExternalId = "short_playlist", dto = embedDto)
+
+        assertEquals(5, domainPlaylist.content.tracks.size)
+        assertNull(domainPlaylist.content.coverUrl)
+        assertEquals("Track 0", domainPlaylist.content.tracks.first().title)
+        assertEquals("Artist 0", domainPlaylist.content.tracks.first().artist)
     }
 
     @Test

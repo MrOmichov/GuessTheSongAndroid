@@ -8,6 +8,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.mromichov.guessthesong.core.network.HttpClientCreator
 import org.mromichov.guessthesong.data.dao.FakePlaylistTracksDao
+import org.mromichov.guessthesong.data.local.NoOpPlaylistCoverStorage
 import org.mromichov.guessthesong.data.repository.PlaylistRepositoryImpl
 
 class YandexLiveIntegrationTest {
@@ -32,13 +33,14 @@ class YandexLiveIntegrationTest {
                 spotifyUrlParser = org.mromichov.guessthesong.data.remote.spotify.SpotifyPlaylistUrlParser(),
                 spotifyMapper = org.mromichov.guessthesong.data.remote.spotify.SpotifyMapper(),
                 playlistTracksDao = FakePlaylistTracksDao(),
+                coverStorage = NoOpPlaylistCoverStorage,
             )
             val url = "https://music.yandex.ru/users/yamusic-top/playlists/1000"
 
-            val result = repository.getPlaylistByUrl(url)
+            val result = repository.fetchPlaylistByUrl(url)
 
             assertTrue("Expected success response, but got: ${result.exceptionOrNull()}", result.isSuccess)
-            val playlist = result.getOrThrow()
+            val playlist = result.getOrThrow().content
 
             println("=== LIVE YANDEX PLAYLIST ===")
             println("Title: ${playlist.title}")

@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 val signingPropertiesFile = rootProject.file("keystore.properties")
@@ -67,6 +68,46 @@ android {
     }
 }
 
+ksp {
+    // KSP's CommandLineArgumentProvider parser rejects paths containing spaces on Windows.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+tasks.matching { it.name == "kspDebugKotlin" || it.name == "kspReleaseKotlin" }.configureEach {
+    inputs.dir("schemas").withPathSensitivity(PathSensitivity.RELATIVE)
+    // Schemas are versioned compiler side effects shared by identical debug/release DB schemas.
+    // Do not claim the same output directory for two tasks or restore classes without schemas.
+    outputs.upToDateWhen { false }
+    outputs.cacheIf { false }
+    if (name == "kspReleaseKotlin") mustRunAfter("kspDebugKotlin")
+}
+
+kover {
+    reports {
+        variant("debug") {
+            html {
+                htmlDir = layout.buildDirectory.dir(
+                    "reports/kover/html/debug"
+                )
+            }
+            verify {
+                rule {
+                    minBound(60)
+                }
+            }
+            filters {
+                excludes {
+                    androidGeneratedClasses()
+                    classes(
+                        // excludes debug classes
+                        "*.DebugUtil"
+                    )
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.19.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
@@ -78,6 +119,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-text-google-fonts")
     implementation("androidx.navigation:navigation-compose:2.9.8")
+    implementation("io.coil-kt.coil3:coil-compose:3.6.3")
 
     // Dagger
     implementation("com.google.dagger:dagger:2.60.1")
@@ -113,6 +155,7 @@ dependencies {
     androidTestImplementation(platform("androidx.compose:compose-bom:2026.08.00"))
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("io.ktor:ktor-client-mock:3.5.2")
 
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
@@ -120,7 +163,7 @@ dependencies {
 }
 
 tasks.register<Copy>("exportDebugApk") {
-    description = "Renames output APK file"
+    description = "Renames output debug APK file"
     dependsOn("assembleDebug")
     from(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
     into(layout.buildDirectory.dir("exports"))
@@ -128,6 +171,7 @@ tasks.register<Copy>("exportDebugApk") {
 }
 
 tasks.register<Copy>("exportSignedReleaseApk") {
+    description = "Renames output release APK file"
     from(layout.projectDirectory.dir("release")) {
         include("*.apk")
     }

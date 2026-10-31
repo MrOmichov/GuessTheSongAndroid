@@ -1,22 +1,34 @@
 package org.mromichov.guessthesong.presentation.startinput
 
-import org.mromichov.guessthesong.domain.model.Playlist
+import org.mromichov.guessthesong.domain.model.playlist.LocalPlaylist
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
+import org.mromichov.guessthesong.domain.model.playlist.RemotePlaylist
 
-// TODO Добавить state Preparing, переименовать Success в ReadyToPlay
 sealed class StartInputUiState {
-    data class ReadyToPlay(
-        val playlist: Playlist
+    object Menu : StartInputUiState()
+    object ImportForm : StartInputUiState()
+    object Importing : StartInputUiState()
+
+    data class PlaylistAlreadySavedConflict(
+        val alreadyExistingPlaylist: LocalPlaylist,
+        val fetchedPlaylist: RemotePlaylist,
     ) : StartInputUiState()
 
-    data class Preparing(
-        val playlist: Playlist
+    data class ImportError(val message: String) : StartInputUiState()
+
+    data class SelectingSavedPlaylist(val id: Long) : StartInputUiState()
+    data class SelectionError(val message: String) : StartInputUiState()
+
+    data class Selected(val playlist: PlaylistContent) : StartInputUiState()
+    data class Preparing(val playlist: PlaylistContent, val completed: Int = 0, val total: Int = 0) : StartInputUiState()
+    data class CancellingPreparation(val playlist: PlaylistContent) : StartInputUiState()
+    data class PreparationError(
+        val message: String,
+        val playlist: PlaylistContent,
     ) : StartInputUiState()
 
-    data class Loaded(
-        val playlist: Playlist
-    ) : StartInputUiState()
+    data class ReadyToPlay(val playlist: PlaylistContent) : StartInputUiState()
 
-    object Idle : StartInputUiState()
-    object Loading : StartInputUiState()
-    data class Error(val message: String) : StartInputUiState()
+    /** The cancelled repository operation has not finished unwinding yet. */
+    object CancellingToMenu : StartInputUiState()
 }

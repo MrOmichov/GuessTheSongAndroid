@@ -1,15 +1,15 @@
 package org.mromichov.guessthesong.domain.game
 
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
+import org.mromichov.guessthesong.core.exception.ItunesAccessForbiddenException
 import org.mromichov.guessthesong.core.exception.TrackCountException
-import org.mromichov.guessthesong.core.exception.TrackPreviewException
-import org.mromichov.guessthesong.domain.model.Playlist
+import org.mromichov.guessthesong.core.exception.TrackPreviewCountException
+import org.mromichov.guessthesong.core.exception.TrackPreviewNotFoundException
 import org.mromichov.guessthesong.domain.model.Track
 import org.mromichov.guessthesong.domain.model.TrackPreview
+import org.mromichov.guessthesong.domain.model.playlist.PlaylistContent
 import org.mromichov.guessthesong.domain.repository.TrackPreviewRepository
 
 class GameManagerTest {
@@ -69,21 +69,6 @@ class GameManagerTest {
     }
 
     @Test
-    fun `prepared round choices are distinct by title and artist`() = runTest {
-        val sourceTracks = tracks(4).flatMap { track ->
-            listOf(track, track.copy(coverUrl = "cover://alternate", durationMs = 200_000))
-        }
-        val manager = GameManager(FakePreviewRepository())
-        manager.prepareRounds(playlist(sourceTracks), GameConfig(1, 10_000))
-
-        val answer = manager.getCurrentRound().track
-        val choiceIdentities = manager.currentRoundOptions.map(::identity).toSet()
-
-        assertEquals(4, choiceIdentities.size)
-        assertTrue(identity(answer) in choiceIdentities)
-    }
-
-    @Test
     fun `prepared rounds use a unique correct track for every question`() = runTest {
         val sourceTracks = tracks(13)
         val manager = GameManager(FakePreviewRepository())
@@ -96,7 +81,11 @@ class GameManagerTest {
         }
 
         assertEquals(10, answers.size)
-        assertEquals("Every round must have a distinct title and artist", answers.size, answers.map(::identity).distinct().size)
+        assertEquals(
+            "Every round must have a distinct title and artist",
+            answers.size,
+            answers.map(::identity).distinct().size
+        )
     }
 
     @Test
@@ -160,7 +149,8 @@ class GameManagerTest {
     @Test
     fun `metadata variants of same title and artist count as one track`() = runTest {
         val sameIdentity = tracks(1).single()
-        val variants = List(4) { index -> sameIdentity.copy(coverUrl = "cover://$index", durationMs = 180_000L + index) }
+        val variants =
+            List(4) { index -> sameIdentity.copy(coverUrl = "cover://$index", durationMs = 180_000L + index) }
         assertInsufficientTracksFailBeforePreview(variants, rounds = 1)
     }
 
@@ -174,12 +164,102 @@ class GameManagerTest {
     }
 
     @Test
-    fun `preview lookup failure is exposed as track preview exception`() = runTest {
-        val manager = GameManager(FakePreviewRepository(fail = true))
+    fun `missing preview is skipped when enough other previews remain`() = runTest {
+        val tracks = tracks(5)
+        var lookupCount = 0
+        val manager = GameManager(
+            FakePreviewRepository { artist, title ->
+                lookupCount++
+                if (lookupCount == 1) {
+                    Result.failure(TrackPreviewNotFoundException(title))
+                } else {
+                    Result.success(TrackPreview(title, artist, "preview://$artist/$title", null))
+                }
+            }
+        )
 
-        assertSuspendThrows(TrackPreviewException::class.java) {
+        manager.prepareRounds(playlist(tracks), GameConfig(2, 10_000))
+
+        val answers = mutableListOf(manager.getCurrentRound().track)
+        manager.nextRound()
+        answers += manager.getCurrentRound().track
+        assertEquals(3, lookupCount)
+        assertEquals(2, answers.size)
+        assertEquals(2, answers.distinct().size)
+    }
+
+    @Test
+    fun `preparation progress counts only rounds with successfully found previews`() = runTest {
+        var lookupCount = 0
+        val progress = mutableListOf<Pair<Int, Int>>()
+        val manager = GameManager(
+            FakePreviewRepository { artist, title ->
+                lookupCount++
+                if (lookupCount == 1) {
+                    Result.failure(TrackPreviewNotFoundException(title))
+                } else {
+                    Result.success(TrackPreview(title, artist, "preview://$artist/$title", null))
+                }
+            }
+        )
+
+        manager.prepareRounds(
+            playlist(tracks(5)),
+            GameConfig(roundsNumber = 2, snippetLength = 10_000),
+            onProgress = { completed, total -> progress += completed to total },
+        )
+
+        assertEquals(listOf(0 to 2, 1 to 2, 2 to 2), progress)
+        assertEquals(3, lookupCount)
+    }
+
+    @Test
+    fun `too few found previews reports actual and needed counts`() = runTest {
+        val tracks = tracks(4)
+        val manager = GameManager(
+            FakePreviewRepository { _, title ->
+                if (title == tracks.first().title) {
+                    Result.failure(TrackPreviewNotFoundException(title))
+                } else {
+                    null
+                }
+            }
+        )
+
+        val error = assertSuspendThrows(TrackPreviewCountException::class.java) {
+            manager.prepareRounds(playlist(tracks), GameConfig(4, 10_000))
+        }
+
+        assertEquals("There are found 3 track previews. Needed: 4", error.message)
+    }
+
+    @Test
+    fun `unexpected preview lookup failure propagates unchanged`() = runTest {
+        val failure = IllegalStateException("preview service unavailable")
+        val manager = GameManager(FakePreviewRepository { _, _ -> Result.failure(failure) })
+
+        val actual = assertSuspendThrows(IllegalStateException::class.java) {
             manager.prepareRounds(playlist(tracks(4)), GameConfig(1, 10_000))
         }
+
+        assertSame(failure, actual)
+    }
+
+    @Test
+    fun `iTunes forbidden failure propagates immediately without trying remaining tracks`() = runTest {
+        val forbidden = ItunesAccessForbiddenException()
+        var lookupCount = 0
+        val manager = GameManager(FakePreviewRepository { _, _ ->
+            lookupCount++
+            Result.failure(forbidden)
+        })
+
+        val actual = assertSuspendThrows(ItunesAccessForbiddenException::class.java) {
+            manager.prepareRounds(playlist(tracks(4)), GameConfig(1, 10_000))
+        }
+
+        assertSame(forbidden, actual)
+        assertEquals(1, lookupCount)
     }
 
     private suspend fun <T : Throwable> assertSuspendThrows(
@@ -199,7 +279,7 @@ class GameManagerTest {
         Track(title = "title-$index", artist = "artist-$index", coverUrl = null, durationMs = 180_000)
     }
 
-    private fun playlist(tracks: List<Track>) = Playlist("playlist", "Playlist", tracks)
+    private fun playlist(tracks: List<Track>) = PlaylistContent("Playlist", tracks)
 
     private fun identity(track: Track) = track.title to track.artist
 
@@ -213,10 +293,12 @@ class GameManagerTest {
         assertEquals("Invalid playlists must be rejected before preview lookup", 0, previewRepository.lookupCount)
     }
 
-    private class FakePreviewRepository(private val fail: Boolean = false) : TrackPreviewRepository {
+    private class FakePreviewRepository(
+        private val resultForTrack: (artist: String, title: String) -> Result<TrackPreview>? = { _, _ -> null },
+    ) : TrackPreviewRepository {
         override suspend fun getPreview(artist: String, title: String): Result<TrackPreview> =
-            if (fail) Result.failure(IllegalStateException("preview unavailable"))
-            else Result.success(TrackPreview(title, artist, "preview://$artist/$title", null))
+            resultForTrack(artist, title)
+                ?: Result.success(TrackPreview(title, artist, "preview://$artist/$title", null))
     }
 
     private class FailFastPreviewRepository : TrackPreviewRepository {

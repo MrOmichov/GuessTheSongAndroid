@@ -9,8 +9,8 @@ import org.mromichov.guessthesong.data.dao.PlaylistTracksDao
 
 @Database(
     entities = [PlaylistEntity::class, TrackEntity::class, PlaylistTrackCrossRef::class],
-    version = 1,
-    exportSchema = false
+    version = 2,
+    exportSchema = true
 )
 abstract class PlaylistDatabase : RoomDatabase() {
     abstract fun playlistTracksDao(): PlaylistTracksDao
