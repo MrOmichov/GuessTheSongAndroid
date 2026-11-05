@@ -163,18 +163,29 @@ dependencies {
 }
 
 tasks.register<Copy>("exportDebugApk") {
-    description = "Renames output debug APK file"
+    description = "Builds and exports the debug APK"
     dependsOn("assembleDebug")
     from(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
     into(layout.buildDirectory.dir("exports"))
     rename { "GuessTheSong-debug.apk" }
 }
 
-tasks.register<Copy>("exportSignedReleaseApk") {
-    description = "Renames output release APK file"
-    from(layout.projectDirectory.dir("release")) {
-        include("*.apk")
+val validateReleaseSigning = tasks.register("validateReleaseSigning") {
+    doLast {
+        check(signingPropertiesFile.isFile) {
+            "Release signing is not configured: provide keystore.properties before exporting the signed APK."
+        }
     }
+}
+
+tasks.matching { it.name == "assembleRelease" }.configureEach {
+    mustRunAfter(validateReleaseSigning)
+}
+
+tasks.register<Copy>("exportSignedReleaseApk") {
+    description = "Builds and exports the signed release APK"
+    dependsOn(validateReleaseSigning, "assembleRelease")
+    from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
     into(layout.buildDirectory.dir("exports"))
     rename { "GuessTheSong-release.apk" }
 }
