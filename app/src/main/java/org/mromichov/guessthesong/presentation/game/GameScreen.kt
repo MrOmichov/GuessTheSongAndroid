@@ -12,6 +12,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -30,6 +31,7 @@ import org.mromichov.guessthesong.presentation.sharedcomponent.AppButton
 import org.mromichov.guessthesong.presentation.sharedcomponent.AppContainer
 import org.mromichov.guessthesong.presentation.sharedcomponent.ErrorContainer
 
+// TODO refactor
 @Composable
 fun GameScreen(viewModel: GameViewModel, onEnd: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -72,7 +74,9 @@ private fun ListeningPreviewContent(viewModel: GameViewModel) {
     Column {
         Text((viewModel.currentRoundIndex + 1).toString()) // TODO не делать +1 а передавать через State
         AppContainer {
-            Column {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 QuestionCover(rotating = true)
                 BiDirectionalProgressBar(
                     progress = animatableProgress.value,
@@ -88,13 +92,26 @@ private fun ListeningPreviewContent(viewModel: GameViewModel) {
 private fun GuessingContent(viewModel: GameViewModel, state: GameUiState.Guessing) {
     Column {
         Text((state.currentRoundIndex + 1).toString())
-        AppContainer { QuestionCover(rotating = false) }
+        AppContainer {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                QuestionCover(rotating = false)
+            }
+        }
         LazyColumn {
             items(state.options.size) {
                 OutlinedButton(
                     onClick = { viewModel.checkAnswer(state.options[it]) }
                 ) {
-                    Text(text = stringResource(R.string.track_option, state.options[it].title, state.options[it].artist))
+                    Text(
+                        text = stringResource(
+                            R.string.track_option,
+                            state.options[it].title,
+                            state.options[it].artist
+                        )
+                    )
                 }
             }
         }
