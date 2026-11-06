@@ -75,6 +75,7 @@ private fun ListeningPreviewContent(viewModel: GameViewModel) {
         Text((viewModel.currentRoundIndex + 1).toString()) // TODO не делать +1 а передавать через State
         AppContainer {
             Column(
+                modifier = Modifier.padding(vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 QuestionCover(rotating = true)
@@ -94,7 +95,7 @@ private fun GuessingContent(viewModel: GameViewModel, state: GameUiState.Guessin
         Text((state.currentRoundIndex + 1).toString())
         AppContainer {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth().padding(4.dp),
                 contentAlignment = Alignment.Center
             ) {
                 QuestionCover(rotating = false)
@@ -125,7 +126,10 @@ private fun AnswerContent(viewModel: GameViewModel, state: GameUiState.Answer) {
     Column {
         Text((state.currentRoundIndex + 1).toString())
         AppContainer {
-            Column {
+            Column(
+                modifier = Modifier.padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Image(
                     painter = coverPainter ?: painterResource(R.drawable.app_icon_playstore),
                     contentDescription = stringResource(R.string.track_cover),
